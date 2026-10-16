@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<!--
+  ♥ 슈가슈가룬 : 하트 컬렉션 ♥ (비상업 팬게임)
+  원작: 안노 모요코 『슈가슈가룬』 — 캐릭터/세계관의 권리는 원작자에게 있습니다.
+  그림·음악은 이 파일에서 SVG / Web Audio로 새로 만든 팬아트입니다.
+  =====================================================
+  [조작법]
+  - 마우스 클릭 / 터치로 조작. 대사는 클릭(또는 Space/Enter)으로 넘깁니다.
+  - 여왕 후보 시험 30일. 하루는 아침 / 방과후 / 밤 3턴.
+      · 수업 듣기   : 지력↑
+      · 하트 모으기 : 남자아이를 골라 상황 선택지 → '아그랑디스망!'으로 하트 채취
+      · 마법 연습   : 마력↑ 체력↓ (마력이 높을수록 하트 채취 성공률↑)
+      · 휴식        : 체력↑
+      · 마을 산책   : 랜덤 이벤트
+  - 👗 옷장 버튼: 에클로 옷을 사서 쇼콜라를 꾸밉니다. (턴 소모 없음, 코디 매력 보너스)
+  - 💝 보석함(하트 케이스)을 누르면 모은 하트를 볼 수 있습니다.
+  - 하트 가치(공식 설정): 피스 5 / 오렌지 300 / 그린 350 / 핑크 1000 /
+                        바이올렛 2500 / 진홍 5000 에클.  노아르(검은 하트)는 위험!
+  - 오른쪽 위 ♪ 음소거 / 💾 세이브 / 📖 로드. 매일 밤 자동 저장.
+  - 30일째 밤, 캔디 여왕 앞에서 결과 발표 → 엔딩 4종.
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>슈가슈가룬 하트 컬렉션</title>
+<style>
+:root{
+  --pink:#ffc6dd; --pink2:#ff7fb6; --pink3:#e0457f;
+  --plum:#2a0f2e; --plum2:#4a1846; --plum3:#7a2c6e;
+  --gold:#f3c98b; --gold2:#d79a54;
+  --cream:#fff6fa; --ink:#4a2245; --ink2:#8a5a86;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#1a0820;font-family:"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+#app{position:relative;width:100%;height:100%;max-width:880px;margin:0 auto;overflow:hidden;background:var(--plum);
+  box-shadow:0 0 0 4px var(--gold2),0 0 0 8px var(--plum2),0 0 40px rgba(255,100,180,.35)}
+/* 레이스 + 리본 프레임 */
+#app::before,#app::after{content:"";position:absolute;left:0;right:0;height:14px;z-index:40;pointer-events:none;
+  background:radial-gradient(circle at 7px 0,#ffe3ef 6px,transparent 7px) 0 0/14px 14px repeat-x,
+             radial-gradient(circle at 7px 0,var(--pink2) 7.5px,transparent 8.5px) 0 0/14px 14px repeat-x}
+#app::before{top:0} #app::after{bottom:0;transform:scaleY(-1)}
+.corner{position:absolute;width:64px;height:64px;z-index:41;pointer-events:none}
+.corner svg{width:100%;height:100%}
+.c-tl{top:2px;left:2px} .c-tr{top:2px;right:2px;transform:scaleX(-1)}
+
+/* ---------- 무대 ---------- */
+#stage{position:absolute;inset:0;overflow:hidden}
+#bg{position:absolute;inset:0;width:100%;height:100%;transition:opacity .5s}
+#chars{position:absolute;left:0;right:0;bottom:0;height:72%;display:flex;justify-content:center;align-items:flex-end;pointer-events:none}
+.charwrap{height:100%;flex:0 1 50%;min-width:0;display:flex;align-items:flex-end;justify-content:center;transition:transform .4s,opacity .4s;animation:charIn .5s ease-out;position:relative}
+.charwrap:only-child{flex-basis:72%}
+.charwrap svg{max-height:100%;width:100%;height:auto;display:block;filter:drop-shadow(0 4px 8px rgba(40,0,40,.35))}
+.charwrap.dim{opacity:.55;transform:scale(.94)}
+.charwrap.bounce{animation:bounce .45s}
+.pet{position:absolute;bottom:4%;width:26%;max-width:90px;z-index:2}
+.pet svg{width:100%;height:auto}
+@keyframes charIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+@keyframes bounce{0%,100%{transform:none}40%{transform:translateY(-14px)}}
+#fx{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden}
+.petal{position:absolute;top:-20px;animation:fall linear forwards}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(720deg)}}
+.tone{position:absolute;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .4s;
+  background:radial-gradient(rgba(255,140,200,.35) 1.3px,transparent 1.6px) 0 0/7px 7px;
+  -webkit-mask:radial-gradient(ellipse at center,transparent 35%,#000 80%);mask:radial-gradient(ellipse at center,transparent 35%,#000 80%)}
+.tone.on{opacity:1}
+.speed{position:absolute;inset:-20%;pointer-events:none;z-index:4;opacity:0;transition:opacity .3s;
+  background:repeating-conic-gradient(from 0deg at 50% 45%,rgba(255,255,255,0) 0deg 4deg,rgba(255,255,255,.85) 4.4deg 5deg);
+  -webkit-mask:radial-gradient(circle at 50% 45%,transparent 28%,#000 60%);mask:radial-gradient(circle at 50% 45%,transparent 28%,#000 60%)}
+.speed.on{opacity:1;animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.barrier{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .4s;
+  background:radial-gradient(circle at 50% 50%,rgba(255,180,220,0) 30%,rgba(255,120,190,.35) 60%,rgba(140,40,140,.6) 100%)}
+.barrier.on{opacity:1;animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{to{filter:hue-rotate(40deg) brightness(1.2)}}
+
+/* ---------- HUD ---------- */
+#hud{position:absolute;top:16px;left:10px;right:10px;z-index:20;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.hudrow{display:flex;gap:6px;align-items:stretch}
+.panel{background:linear-gradient(#fff,#ffeef6);border:2px solid var(--gold2);border-radius:14px;padding:5px 9px;
+  box-shadow:0 0 0 2px var(--plum2),0 4px 10px rgba(0,0,0,.3);pointer-events:auto}
+#datebox{display:flex;align-items:center;gap:6px;font-size:15px;white-space:nowrap}
+#datebox .day{font-size:20px;color:var(--pink3)}
+#datebox .slot{background:var(--plum3);color:#fff;border-radius:10px;padding:1px 8px;font-size:13px}
+#stats{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:3px 8px;font-size:11.5px}
+.stat .lbl{display:flex;justify-content:space-between}
+.bar{height:7px;background:#f3e4ef;border-radius:5px;overflow:hidden;border:1px solid #f0cde0}
+.bar i{display:block;height:100%;border-radius:5px;transition:width .5s}
+#topbtns{display:flex;gap:4px}
+#topbtns button{width:34px;height:34px;border-radius:50%;border:2px solid var(--gold2);background:#fff;font-size:15px;padding:0;box-shadow:0 2px 0 var(--plum3)}
+#topbtns button:active{transform:translateY(2px);box-shadow:none}
+#rival{font-size:11.5px}
+.vs{display:grid;grid-template-columns:48px 1fr 64px;align-items:center;gap:4px;margin:1px 0}
+.vs b{text-align:right;font-size:11px}
+.vs .bar{height:9px}
+#case{position:absolute;right:12px;top:176px;z-index:21;width:66px;pointer-events:auto;cursor:pointer;text-align:center}
+#case svg{width:100%;height:auto;overflow:visible;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))}
+#caseCount{font-size:11px;color:#fff;text-shadow:0 0 4px var(--pink3),0 0 4px var(--pink3);margin-top:-4px}
+#wardBtn{position:absolute;left:12px;top:176px;z-index:21;width:58px;height:58px;border-radius:50%;border:3px solid var(--gold2);
+  background:radial-gradient(#fff,#ffd6e8);font-size:24px;box-shadow:0 0 0 3px var(--plum2),0 4px 0 var(--plum3);line-height:1}
+#wardBtn small{display:block;font-size:10px;color:var(--ink)}
+
+/* ---------- 대사창 ---------- */
+#dlg{position:absolute;left:10px;right:10px;bottom:18px;z-index:30;display:none}
+#dlg.show{display:block;animation:pop .25s}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+.bubble{position:relative;background:#fff;border:3px solid var(--ink);border-radius:26px;padding:16px 18px 14px;min-height:96px;box-shadow:4px 5px 0 var(--pink3)}
+.bubble::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--pink);border-radius:20px;pointer-events:none}
+.bubble.tail::after{content:"";position:absolute;top:-22px;left:var(--tail,50%);width:26px;height:26px;background:#fff;
+  border-left:3px solid var(--ink);border-top:3px solid var(--ink);transform:skewX(-18deg) rotate(45deg) translateY(10px)}
+.bubble.shout{border-radius:8px;clip-path:polygon(0 8%,4% 0,12% 6%,22% 0,34% 5%,46% 0,58% 6%,70% 0,82% 5%,92% 0,100% 8%,97% 30%,100% 55%,97% 80%,100% 100%,85% 95%,70% 100%,50% 95%,30% 100%,12% 96%,0 100%,3% 70%,0 45%,3% 22%)}
+.bubble.thought{border-style:dotted}
+.bubble.narr{background:linear-gradient(#fff4fa,#fff);border-color:var(--plum3);border-radius:6px;font-style:italic}
+.nameplate{position:absolute;top:-16px;left:18px;background:linear-gradient(var(--pink2),var(--pink3));color:#fff;padding:3px 14px;border-radius:14px;font-size:14px;border:2px solid #fff;box-shadow:0 2px 0 var(--plum3);z-index:2}
+#dlgText{font-size:16px;line-height:1.6;min-height:52px;white-space:pre-wrap;position:relative;z-index:1}
+#dlgNext{position:absolute;right:16px;bottom:6px;color:var(--pink2);animation:blink 1s infinite;font-size:14px}
+@keyframes blink{50%{opacity:.2}}
+#choices{display:flex;flex-direction:column;gap:7px;margin-top:6px;position:relative;z-index:2}
+.choice{background:linear-gradient(#fff,#ffeef6);border:2px solid var(--pink2);border-radius:20px;padding:8px 12px;font-size:15px;color:var(--ink);box-shadow:0 3px 0 var(--pink);text-align:left}
+.choice:hover{background:linear-gradient(#fff,#ffdced)}
+.choice:active{transform:translateY(2px);box-shadow:none}
+
+/* ---------- 행동 메뉴 ---------- */
+#menu{position:absolute;left:8px;right:8px;bottom:18px;z-index:25;display:none}
+#menu.show{display:block;animation:pop .3s}
+#menuTitle{text-align:center;font-size:15px;margin-bottom:6px;color:#fff;text-shadow:0 0 4px var(--pink3),0 0 8px var(--pink3)}
+#acts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.act{background:linear-gradient(#fff,#ffeaf4);border:2.5px solid var(--gold2);border-radius:18px;padding:8px 2px 6px;font-size:13px;color:var(--ink);
+  box-shadow:0 0 0 2px var(--plum2),0 4px 0 var(--plum3);display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.act .ico{font-size:24px;line-height:1}
+.act small{font-size:10px;color:var(--ink2)}
+.act:active{transform:translateY(3px);box-shadow:none}
+.act:disabled{opacity:.45;filter:grayscale(.6)}
+#npcPick{display:none;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}
+#npcPick.show{display:grid}
+.npcbtn{background:#fff;border:2px solid var(--pink2);border-radius:14px;padding:4px 2px;font-size:11.5px;color:var(--ink)}
+.npcbtn .hearts{color:var(--pink3);font-size:10px;display:block}
+.npcbtn:disabled{opacity:.4}
+
+/* ---------- 토스트 / 하트 연출 ---------- */
+#toasts{position:absolute;top:44%;left:0;right:0;z-index:35;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+.toast{background:rgba(255,255,255,.96);border:2px solid var(--pink2);border-radius:16px;padding:4px 14px;font-size:14px;animation:toast 1.9s forwards;box-shadow:0 3px 0 var(--plum3);display:flex;align-items:center;gap:4px}
+@keyframes toast{0%{opacity:0;transform:translateY(10px) scale(.8)}15%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
+.flyheart{position:absolute;z-index:36;width:40px;height:40px;pointer-events:none}
+.flyheart svg{width:100%;height:100%;animation:twinkle .3s infinite alternate}
+@keyframes twinkle{to{filter:brightness(1.4) drop-shadow(0 0 8px #fff)}}
+.sparkle{position:absolute;z-index:36;pointer-events:none;color:#fff;text-shadow:0 0 6px #ffd6f0,0 0 10px #ff8fbf;animation:sp .8s forwards}
+@keyframes sp{from{opacity:1;transform:scale(.4)}to{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.3) rotate(90deg)}}
+.flash{position:absolute;inset:0;background:#fff;z-index:60;pointer-events:none;animation:flash .6s forwards}
+@keyframes flash{from{opacity:.9}to{opacity:0}}
+
+/* ---------- 화면들 ---------- */
+.screen{position:absolute;inset:0;z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+.screen.show{display:flex}
+#title{background:linear-gradient(180deg,#1b0a3a 0%,#40195e 55%,#7a2c6e 100%);overflow:hidden}
+#titleSky{position:absolute;inset:0;width:100%;height:100%}
+#book{position:relative;width:min(300px,72vw);aspect-ratio:3/4;perspective:1200px;margin-bottom:16px}
+#bookPage{position:absolute;inset:0;border-radius:6px 14px 14px 6px;background:linear-gradient(90deg,#f6e6d2,#fff8ee 12%,#fff8ee);
+  box-shadow:inset 10px 0 18px rgba(120,60,40,.25),0 10px 30px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+#bookCover{position:absolute;inset:0;border-radius:6px 14px 14px 6px;transform-origin:left center;transition:transform 1.6s cubic-bezier(.6,.05,.3,1);transform-style:preserve-3d;
+  background:linear-gradient(135deg,#5a2a6e,#2e1240);border:3px solid var(--gold2);box-shadow:inset 0 0 0 8px #3e1a52,inset 0 0 0 10px var(--gold2),0 10px 30px rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;backface-visibility:hidden;cursor:pointer}
+#bookCover.open{transform:rotateY(-165deg)}
+#bookCover .emb{width:60%;opacity:.9}
+.logo{font-size:clamp(26px,7vw,40px);line-height:1.05;color:#ff7fb6;-webkit-text-stroke:1.5px #8a1d4f;text-shadow:3px 3px 0 #ffd0e6;margin:4px 0;transform:rotate(-3deg)}
+.logo small{display:block;font-size:.45em;color:#7a2c6e;-webkit-text-stroke:0;text-shadow:none;letter-spacing:2px;white-space:nowrap}
+.fanNote{font-size:10.5px;color:#8a5a86;margin-top:6px}
+.bigbtn{position:relative;display:block;width:200px;margin:6px auto;padding:9px;border-radius:30px;border:3px solid #fff;font-size:16px;color:#fff;
+  background:linear-gradient(var(--pink2),var(--pink3));box-shadow:0 4px 0 #a02a5c,0 6px 14px rgba(200,60,120,.3)}
+.bigbtn.alt{background:linear-gradient(#a07ad8,#6a3fa8);box-shadow:0 4px 0 #44236e}
+.bigbtn:active{transform:translateY(4px);box-shadow:none}
+.bigbtn:disabled{opacity:.5}
+#tapHint{color:#ffd6ea;font-size:13px;animation:blink 1.4s infinite;margin-top:8px;position:relative}
+#ending{background:radial-gradient(ellipse at 50% 30%,#fff 0%,#ffd8ea 40%,#7a2c6e 100%);overflow-y:auto;justify-content:flex-start;padding-top:40px}
+#ending.noir{background:radial-gradient(ellipse at 50% 30%,#6a4a7a 0%,#2a0f2e 60%,#000 100%)}
+#ending h2{font-size:28px;color:var(--pink3);-webkit-text-stroke:1px #fff;text-shadow:3px 3px 0 var(--plum3);margin:6px 0}
+#ending .etext{background:#fff;border:3px double var(--pink2);border-radius:18px;padding:14px;line-height:1.7;max-width:540px;font-size:15px;white-space:pre-wrap;text-align:left}
+#ending .score{margin:10px;font-size:14px;color:#fff;text-shadow:0 0 4px var(--plum)}
+#endingArt{height:34vh;max-height:280px;display:flex;justify-content:center}
+#endingArt svg{height:100%;width:auto}
+.modal{background:rgba(26,8,32,.7)}
+.modal .inner{background:linear-gradient(#fff,#fff0f7);border:3px solid var(--gold2);box-shadow:0 0 0 3px var(--plum2);border-radius:20px;padding:16px;max-width:380px;width:100%;max-height:86%;overflow:auto}
+.heartRow{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13.5px;text-align:left}
+.heartRow svg{width:26px;height:26px;flex:none}
+
+/* ---------- 옷장 (드레스업) ---------- */
+#ward{background:
+  linear-gradient(45deg,rgba(255,255,255,.03) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.03) 75%) 0 0/28px 28px,
+  linear-gradient(45deg,rgba(255,255,255,.03) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.03) 75%) 14px 14px/28px 28px,
+  radial-gradient(ellipse at center,#4a1846,#22091f);padding:20px 12px 18px;justify-content:flex-start}
+#wardHead{color:#fff;font-size:18px;text-shadow:0 0 6px var(--pink3);margin-bottom:6px;display:flex;gap:10px;align-items:center;justify-content:center}
+#wardHead .ecru{background:#fff;color:var(--pink3);border-radius:12px;padding:2px 10px;font-size:13px;border:2px solid var(--gold2)}
+#wardBody{display:grid;grid-template-columns:62px minmax(0,1fr) minmax(0,1.25fr);gap:10px;width:100%;flex:1;min-height:0}
+#tabs{display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.tab{position:relative;height:46px;border-radius:12px 22px 22px 12px;border:2px solid var(--gold2);background:linear-gradient(#ffe6f0,#ffc6dd);padding:0 0 0 18px;display:flex;align-items:center;justify-content:center}
+.tab::before{content:"";position:absolute;left:4px;top:50%;width:12px;height:12px;transform:translateY(-50%) rotate(45deg);background:radial-gradient(circle at 30% 30%,#fff,#ff4f8f);border-radius:2px}
+.tab svg{width:26px;height:26px}
+.tab.on{background:linear-gradient(#fff,#ffd6e8);box-shadow:0 0 0 3px var(--pink2),0 0 12px #ff7fb6}
+#mirror{position:relative;border-radius:120px 120px 20px 20px;border:4px solid var(--gold2);box-shadow:0 0 0 4px var(--plum2),inset 0 0 20px rgba(0,0,0,.4);overflow:hidden;min-height:0;background:#3b1638}
+#mirror svg.room{position:absolute;inset:0;width:100%;height:100%}
+#mirrorChar{position:absolute;left:0;right:0;bottom:2%;top:6%;display:flex;justify-content:center}
+#mirrorChar svg{height:100%;width:auto}
+#coordBadge{position:absolute;left:8px;right:8px;bottom:6px;background:rgba(255,255,255,.9);border-radius:12px;font-size:12px;padding:3px;border:2px solid var(--pink2)}
+#grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;overflow-y:auto;align-content:start;padding:4px}
+.item{position:relative;background:linear-gradient(#5a2050,#3a1238);border:2px solid var(--gold2);border-radius:12px;padding:12px 4px 4px;color:#fff;font-size:11.5px;text-align:center}
+.item .pv{height:84px;display:flex;justify-content:center;align-items:center}
+.item .pv svg{height:100%;width:auto}
+.item .gem{position:absolute;top:-9px;left:50%;transform:translateX(-50%);width:22px;height:20px}
+.item .price{display:block;color:var(--gold);font-size:10.5px}
+.item.on{box-shadow:0 0 0 3px #fff,0 0 14px #ff7fb6;background:linear-gradient(#8a2f72,#5a1a52)}
+.item.locked .pv{filter:brightness(.55) saturate(.6)}
+#wardClose{margin-top:8px}
+
+@media (max-width:560px){
+  #stats{grid-template-columns:repeat(2,1fr)}
+  #acts{grid-template-columns:repeat(3,1fr)}
+  #npcPick{grid-template-columns:repeat(3,1fr)}
+  .act{padding:6px 2px 4px} .act .ico{font-size:20px}
+  #dlgText{font-size:15px}
+  #case{width:54px;top:196px} #wardBtn{top:196px;width:50px;height:50px;font-size:20px}
+  #wardBody{grid-template-columns:50px minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr)}
+  #tabs{grid-row:1/3} #grid{grid-column:2;grid-template-columns:repeat(3,1fr)}
+  .item .pv{height:60px}
+  .tab{height:40px;padding-left:14px} .tab svg{width:22px;height:22px}
+  .corner{width:44px;height:44px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="corner c-tl" id="cornerL"></div><div class="corner c-tr" id="cornerR"></div>
+  <div id="stage">
+    <svg id="bg" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice"></svg>
+    <div class="tone" id="tone"></div>
+    <div class="speed" id="speed"></div>
+    <div class="barrier" id="barrier"></div>
+    <div id="chars"></div>
+    <div id="fx"></div>
+  </div>
+
+  <div id="hud" style="display:none">
+    <div class="hudrow">
+      <div class="panel" id="datebox"><span class="day" id="hDay">1일째</span><span class="slot" id="hSlot">아침</span></div>
+      <div style="flex:1"></div>
+      <div id="topbtns">
+        <button id="bMute" title="음소거">♪</button>
+        <button id="bSave" title="세이브">💾</button>
+        <button id="bLoad" title="로드">📖</button>
+      </div>
+    </div>
+    <div class="hudrow"><div class="panel" id="stats"></div></div>
+    <div class="hudrow">
+      <div class="panel" id="rival" style="flex:1">
+        <div class="vs"><span>쇼콜라</span><div class="bar"><i id="vsMe" style="background:linear-gradient(90deg,#ffb36b,#ff5f8f)"></i></div><b id="vsMeN">0</b></div>
+        <div class="vs"><span>바닐라</span><div class="bar"><i id="vsRi" style="background:linear-gradient(90deg,#c9e6ff,#8fa6ff)"></i></div><b id="vsRiN">0</b></div>
+      </div>
+    </div>
+  </div>
+  <div id="case" style="display:none"><div id="caseSvg"></div><div id="caseCount">0</div></div>
+  <button id="wardBtn" style="display:none">👗<small>옷장</small></button>
+
+  <div id="menu">
+    <div id="menuTitle">무엇을 할까?</div>
+    <div id="acts"></div>
+    <div id="npcPick"></div>
+  </div>
+
+  <div id="dlg">
+    <div class="bubble tail" id="bubble">
+      <div class="nameplate" id="dlgName">쇼콜라</div>
+      <div id="dlgText"></div>
+      <div id="choices"></div>
+      <div id="dlgNext">▼</div>
+    </div>
+  </div>
+  <div id="toasts"></div>
+
+  <!-- 오프닝: 밤하늘의 마법책 -->
+  <div class="screen show" id="title">
+    <svg id="titleSky" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice"></svg>
+    <div id="book">
+      <div id="bookPage">
+        <div class="logo">슈가슈가룬<small>♥ HEART COLLECTION ♥</small></div>
+        <div id="titleChars" style="height:42%;display:flex;justify-content:center;margin:4px 0"></div>
+        <button class="bigbtn" id="bNew">♥ 처음부터</button>
+        <button class="bigbtn alt" id="bCont">☾ 이어하기</button>
+        <div class="fanNote">원작: 안노 모요코 「슈가슈가룬」 · 비상업 팬게임</div>
+      </div>
+      <div id="bookCover"><div class="emb" id="bookEmb"></div></div>
+    </div>
+    <div id="tapHint">✦ 마법책을 눌러 열어 주세요 ✦</div>
+  </div>
+
+  <div class="screen" id="ending">
+    <div id="endingArt"></div>
+    <h2 id="endTitle"></h2>
+    <div class="etext" id="endText"></div>
+    <div class="score" id="endScore"></div>
+    <button class="bigbtn" id="bRetry">♥ 타이틀로</button>
+  </div>
+
+  <div class="screen modal" id="caseView">
+    <div class="inner">
+      <h3 style="margin:0 0 8px;color:#e0457f">💝 하트 보석함</h3>
+      <div id="caseList"></div>
+      <button class="bigbtn" id="bCaseClose" style="width:150px;font-size:14px;padding:6px">닫기</button>
+    </div>
+  </div>
+
+  <!-- 옷장 -->
+  <div class="screen" id="ward">
+    <div id="wardHead">👗 쇼콜라의 드레스룸 <span class="ecru" id="wardEcru">0 에클</span></div>
+    <div id="wardBody">
+      <div id="tabs"></div>
+      <div id="mirror"><svg class="room" id="mirrorRoom" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice"></svg><div id="mirrorChar"></div><div id="coordBadge"></div></div>
+      <div id="grid"></div>
+    </div>
+    <button class="bigbtn" id="wardClose">♥ 완료</button>
+  </div>
+</div>
+<script>
+"use strict";
+/* =========================================================
+   1. 데이터 — 원작 설정 기반
+   ========================================================= */
+/* 하트 종류 & 가치 (공식 사이트 '하트의 의미' 설정) */
+const HEARTS = {
+  pis:    {name:'피스',       c1:'#fff3b0', c2:'#e8c25a', ecru:5,    desc:'깜짝 놀랐을 때 나오는 꿀색 하트'},
+  orange: {name:'오렌지',     c1:'#ffd2a0', c2:'#ff8a2a', ecru:300,  desc:'첫눈에 반했을 때 — 사랑이 싹튼 순간'},
+  green:  {name:'그린',       c1:'#d4f7c8', c2:'#3fbf6a', ecru:350,  desc:'친구를 진심으로 생각할 때 생기는 우정'},
+  pink:   {name:'핑크',       c1:'#ffd0e6', c2:'#ff5fa2', ecru:1000, desc:'달콤한 사랑의 두근거림'},
+  violet: {name:'바이올렛',   c1:'#e8d0ff', c2:'#9a4fe0', ecru:2500, desc:'상대를 강하게 원하는 마음'},
+  crimson:{name:'진홍',       c1:'#ff9aa8', c2:'#c8102e', ecru:5000, desc:'누군가를 진심으로 사랑하는 정열의 하트'},
+  noir:   {name:'노아르',     c1:'#6a5a7a', c2:'#0d0710', ecru:-1500,desc:'질투와 증오의 어둠. 품으면 영혼까지 좀먹는다'},
+  blanc:  {name:'블랑',       c1:'#ffffff', c2:'#dfe6ff', ecru:0,    desc:'새하얀 순백의 하트. 특별한 힘이 있다고 한다'}
+};
+const HEART_ORDER = ['pis','orange','green','pink','violet','crimson','blanc','noir'];
+const SLOTS = ['아침','방과후','밤'];
+const STATS = [
+  {k:'charm', n:'매력', c:'linear-gradient(90deg,#ffc0dc,#ff5fa2)'},
+  {k:'intel', n:'지력', c:'linear-gradient(90deg,#c9ecff,#5aaee8)'},
+  {k:'magic', n:'마력', c:'linear-gradient(90deg,#e2d4ff,#9a4fe0)'},
+  {k:'hp',    n:'체력', c:'linear-gradient(90deg,#c8f5df,#3fbf6a)'}
+];
+
+/* 등장인물 외형 (원작 설정: 쇼콜라=오렌지 롱헤어·초록 눈·뾰족귀 / 바닐라=짧은 금발 곱슬·보라 눈 / 피에르=백금발·아이스블루 눈) */
+const PEOPLE = {
+  chocolat:{name:'쇼콜라', hair:'#ff7a2e', hair2:'#d9531a', eye:'#2fae5f', skin:'#ffeadb', ears:true},
+  vanilla: {name:'바닐라', hair:'#ffe8a3', hair2:'#e8c066', eye:'#8a5fd6', skin:'#fff1e8', ears:true,
+            look:{hair:'curly', ribbon:'blueRibbon', dress:'vanillaDress', shoes:'whiteStrap', neck:'pearl'}},
+  pierre:  {name:'피에르', hair:'#f4f1e6', hair2:'#cfc8b0', eye:'#7ec8f0', skin:'#fff1e6', boy:true, tall:true,
+            look:{hair:'boyLong', uniform:'#2c2f4a', tie:'#9fd4f2'}},
+  robin:   {name:'로비 선생님', hair:'#3a2b4a', hair2:'#1c1226', eye:'#c04070', skin:'#ffe6d8', boy:true, shades:true,
+            look:{hair:'rocker', uniform:'#1c1a24', tie:'#e0457f', jacket:true}},
+  candy:   {name:'캔디 여왕', hair:'#ffe6a8', hair2:'#e2b860', eye:'#8a5fd6', skin:'#fff3ea', ears:true, crown:true,
+            look:{hair:'queen', dress:'queenDress', neck:'pearl', shoes:'whiteStrap'}},
+  duke:    {name:'듀크', pet:'frog'},
+  blanca:  {name:'블랑카', pet:'mouse'}
+};
+
+/* 하트를 모을 대상 — 인간계 학교의 남자아이들 */
+const BOYS = {
+  classrep:{ name:'반장', desc:'성실한 모범생. 공부 잘하는 아이에게 약하다.', likes:'intel',
+    hair:'#3a2a20', hair2:'#1e140e', eye:'#5a3a2a', skin:'#ffe6d4', uniform:'#3c4a7a', tie:'#d94a6e', style:'boyNeat', glasses:true},
+  soccer:{ name:'축구부 선배', desc:'밝고 털털한 열혈파. 씩씩한 아이를 좋아한다.', likes:'hp',
+    hair:'#8a4a22', hair2:'#5a2c10', eye:'#6a3a1a', skin:'#ffdcc4', uniform:'#3c4a7a', tie:'#ff8a2a', style:'boySpiky'},
+  library:{ name:'도서위원', desc:'조용하고 수줍음 많은 책벌레.', likes:'intel',
+    hair:'#4a4a6a', hair2:'#2a2a40', eye:'#4a5a9a', skin:'#fff0e6', uniform:'#3c4a7a', tie:'#5cc2f2', style:'boyMessy'},
+  band:{ name:'경음악부', desc:'로비 선생님의 열혈 팬. 화려한 걸 좋아한다.', likes:'charm',
+    hair:'#c03a6a', hair2:'#8a1f48', eye:'#7a2a4a', skin:'#ffe6d8', uniform:'#3c4a7a', tie:'#9a4fe0', style:'boySpiky'},
+  pierre:{ name:'피에르', desc:'펜싱부·테니스부 주장. 팬클럽 「더 멤버즈」를 거느린 인기인. …어딘가 차갑다.', likes:'magic', special:true }
+};
+const BOY_IDS = Object.keys(BOYS);
+
+const ACTIONS = [
+  {id:'study', ico:'📚', name:'수업 듣기', hint:'지력↑'},
+  {id:'heart', ico:'💗', name:'하트 모으기', hint:'남자아이 선택'},
+  {id:'magic', ico:'🪄', name:'마법 연습', hint:'마력↑ 체력↓'},
+  {id:'rest',  ico:'🛏️', name:'휴식', hint:'체력↑'},
+  {id:'walk',  ico:'🌙', name:'마을 산책', hint:'랜덤 이벤트'}
+];
+
+/* 하트 채취 상황 — {n}: 대상 이름. type: romance(두근)/friend(우정)/clumsy(덜렁·버럭) */
+const SITUATIONS = [
+  {title:'복도 모퉁이 충돌', intro:'복도 모퉁이를 돌다가 {n}와(과) 정면으로 쾅! 책이 사방에 흩어졌다.',
+   ch:[{l:'"미, 미안해!" 얼굴을 붉히며 책을 같이 줍는다', type:'romance', t:'손끝이 살짝 닿았다. {n}의 얼굴이 빨개진다…!'},
+       {l:'"괜찮아? 다친 데 없어?" 손을 내민다', type:'friend', t:'"고마워. 너 좋은 애구나." {n}가 환하게 웃었다.'},
+       {l:'"앞 좀 보고 다녀!" 버럭 화낸다', type:'clumsy', t:'{n}가 깜짝 놀라 뒷걸음질 쳤다!'}]},
+  {title:'비 오는 하굣길', intro:'갑자기 쏟아지는 비. 신발장 앞에서 {n}가 우산 없이 하늘만 보고 있다.',
+   ch:[{l:'"같이 쓸래?" 우산을 내민다', type:'romance', t:'좁은 우산 아래, {n}의 어깨가 내 쪽으로 기울었다.'},
+       {l:'우산을 빌려주고 빗속을 뛰어간다', type:'friend', t:'"야! 너는 어쩌려고!" 뒤에서 {n}가 웃으며 외친다.'},
+       {l:'몰래 마법으로 비를 그치게 한다', type:'clumsy', t:'펑! 비가 그친 대신 하늘에서 초콜릿 비가…?! {n}가 경악한다.'}]},
+  {title:'점심시간 도시락', intro:'점심시간. {n}가 매점 빵이 다 팔려서 시무룩해 있다.',
+   ch:[{l:'"내 도시락 반 줄게!" 옆에 앉는다', type:'romance', t:'"…이거 네가 만든 거야? 맛있다." 두근.'},
+       {l:'반 친구들이랑 같이 먹자고 부른다', type:'friend', t:'왁자지껄한 점심. {n}도 금세 녹아들었다.'},
+       {l:'"흥, 그러게 일찍 가지." 혼자 먹는다', type:'clumsy', t:'{n}의 배에서 꼬르륵… 민망한 침묵.'}]},
+  {title:'체육 시간 응원', intro:'체육 시간 계주. {n}가 마지막 주자로 뛰고 있다!',
+   ch:[{l:'"{n}, 힘내!!" 큰 소리로 응원한다', type:'romance', t:'결승선을 통과한 {n}가 나를 보고 브이를 그렸다.'},
+       {l:'반 전체 응원을 리드한다', type:'friend', t:'"우리 반 최고!" 다 함께 하이파이브!'},
+       {l:'응원하다가 흥분해서 트랙에 뛰어든다', type:'clumsy', t:'"쇼콜라?!" 모두가 얼어붙었다.'}]},
+  {title:'도서실의 높은 책장', intro:'도서실. {n}가 높은 책장에 손을 뻗고 있다.',
+   ch:[{l:'사다리를 잡아 주며 올려다본다', type:'romance', t:'눈이 마주쳤다. {n}가 책으로 얼굴을 가렸다.'},
+       {l:'"그 책 나도 읽고 싶었어!" 말을 건다', type:'friend', t:'둘은 책 이야기로 한참 수다를 떨었다.'},
+       {l:'점프해서 대신 꺼내다 책장을 흔든다', type:'clumsy', t:'와르르르! 책 눈사태 속에서 {n}가 비명을 질렀다.'}]},
+  {title:'방과후 청소 당번', intro:'방과후 교실 청소. 같은 당번인 {n}와(과) 단둘이다.',
+   ch:[{l:'"저기… 너는 좋아하는 사람 있어?"', type:'romance', t:'{n}의 손에서 빗자루가 툭 떨어졌다.'},
+       {l:'노래를 흥얼거리며 즐겁게 청소한다', type:'friend', t:'{n}도 따라 흥얼거린다. 금방 끝났다!'},
+       {l:'빗자루를 마녀처럼 타 본다', type:'clumsy', t:'"너… 지금 떴었지?!" {n}가 눈을 비빈다.'}]},
+  {title:'아기 고양이 구출', intro:'나무 위에서 아기 고양이가 울고 있다. {n}가 발을 동동 구른다.',
+   ch:[{l:'같이 나무에 올라가 손을 맞잡는다', type:'romance', t:'고양이를 안고 내려오다 {n}의 품에 쏙…!'},
+       {l:'"내가 받쳐 줄게!" 팀플레이', type:'friend', t:'고양이 무사 구출! 둘은 하이파이브.'},
+       {l:'"냐옹!" 고양이 흉내로 설득한다', type:'clumsy', t:'고양이보다 {n}가 더 놀랐다.'}]},
+  {title:'시험 공부', intro:'시험 전날. {n}가 문제집을 붙들고 머리를 싸매고 있다.',
+   ch:[{l:'옆자리에 앉아 함께 공부한다', type:'romance', t:'"…너 생각보다 똑똑하네." 귀가 빨개진 {n}.'},
+       {l:'요점 정리 노트를 빌려준다', type:'friend', t:'"생명의 은인이야!" {n}가 노트를 꼭 안았다.'},
+       {l:'"이런 것도 몰라?" 놀린다', type:'clumsy', t:'{n}가 발끈하며 노려본다!'}]},
+  {title:'바람에 날린 악보', intro:'옥상. 바람에 {n}의 악보가 휘날린다!',
+   ch:[{l:'점프해서 잡아 건네며 미소 짓는다', type:'romance', t:'"…고마워." 노을빛 속 {n}의 얼굴이 붉다.'},
+       {l:'"무슨 곡이야? 들려줘!"', type:'friend', t:'{n}의 연주를 함께 들었다. 좋은 노래다.'},
+       {l:'마법으로 바람을 불러 되돌린다', type:'clumsy', t:'악보는 돌아왔지만 {n}의 머리가 폭탄머리가 됐다!'}]},
+  {title:'초콜릿 선물', intro:'오늘은 왠지 달콤한 날. 가방 안에 직접 만든 초콜릿이 있다.',
+   ch:[{l:'{n}에게 수줍게 건넨다', type:'romance', t:'"나, 나한테?!" {n}의 심장 소리가 들릴 것 같다.'},
+       {l:'반 친구 모두에게 나눠 준다', type:'friend', t:'모두의 웃음 속에서 {n}도 엄지를 척.'},
+       {l:'건네려다 넘어져 얼굴에 철퍽', type:'clumsy', t:'{n}의 얼굴이 초콜릿 범벅이 되었다…'}]},
+  {title:'넘어질 뻔한 순간', intro:'계단에서 발을 헛디뎠다! 바로 앞에 {n}가 있다.',
+   ch:[{l:'{n}의 팔을 꼭 붙잡는다', type:'romance', t:'{n}가 나를 받쳐 안았다. 시간이 멈춘 것 같다.'},
+       {l:'"고마워! 덕분에 살았어!" 씩 웃는다', type:'friend', t:'"조심 좀 해, 덜렁아." {n}가 웃는다.'},
+       {l:'공중제비로 착지한다', type:'clumsy', t:'완벽한 착지! …{n}의 입이 떡 벌어졌다.'}]},
+  {title:'축제 준비', intro:'학교 축제 준비. {n}와(과) 간판 그리기를 맡았다.',
+   ch:[{l:'같은 붓으로 하트를 그린다', type:'romance', t:'간판 한가운데 커다란 하트. {n}가 쑥스러워한다.'},
+       {l:'반 모두의 이름을 넣자고 제안한다', type:'friend', t:'모두의 이름이 들어간 간판에 박수가 쏟아졌다.'},
+       {l:'페인트 통을 엎는다', type:'clumsy', t:'{n}의 교복이 무지개색이 되었다…!'}]}
+];
+
+/* 마을 산책 이벤트 */
+const EVENTS = [
+  {title:'바닐라와 수다 타임', bg:'room', who:'vanilla',
+   intro:'바닐라가 놀러 왔다. 분홍 소파에 나란히 앉아 수다를 떤다.',
+   ch:[{l:'"바닐라는 요즘 하트 몇 개 모았어?"', t:'바닐라: "응… 근데 쇼콜라가 더 반짝여 보여." 수줍게 웃는다.', e:{bond:10, charm:2}},
+       {l:'같이 옷을 골라 본다', t:'"쇼콜라는 핑크가 잘 어울려!" 서로 코디를 해 주었다.', e:{bond:8, ecru:300}}]},
+  {title:'듀크의 하트 강의', bg:'room', who:'duke',
+   intro:'듀크: "어이 쇼콜라. 하트 색깔 공부는 하고 있냐?"',
+   ch:[{l:'진지하게 강의를 듣는다', t:'"진홍 하트는 진심으로 사랑할 때만 나온다. 명심해." 지력이 올랐다.', e:{intel:4, magic:2}},
+       {l:'"알아, 알아~" 대충 넘긴다', t:'듀크: "…쳇. 나중에 울지나 마라." 개굴.', e:{hp:5}}]},
+  {title:'블랑카의 도발', bg:'road', who:'blanca',
+   intro:'블랑카: "어머, 쇼콜라. 바닐라 님은 오늘도 하트를 잔뜩 모으셨는데~?"',
+   ch:[{l:'"흥! 나도 질 수 없어!"', t:'불끈! 의욕이 솟는다.', e:{magic:3, hp:-5}},
+       {l:'"바닐라가 잘한다니 다행이네!"', t:'블랑카: "…흥, 뭐야. 김새게." 의외로 꼬리가 살랑.', e:{bond:5, charm:2}}]},
+  {title:'로비 선생님의 콘서트', bg:'road', who:'robin',
+   intro:'인간계 최고 인기 록스타 로비 선생님의 게릴라 라이브! 관객들의 하트가 반짝인다.',
+   ch:[{l:'무대 앞에서 신나게 즐긴다', t:'로비: "쇼콜라, 공부 대신 놀러 왔냐!" 하지만 윙크를 날려 준다.', e:{charm:3, hp:-5, ecru:350}},
+       {l:'관객들의 하트 색깔을 관찰한다', t:'핑크, 오렌지, 그린… 하트는 정말 가지각색이다.', e:{intel:3, magic:2}}]},
+  {title:'초콜릿 가게', bg:'road',
+   intro:'인간계의 초콜릿 가게. 마계의 초콜릿 냄새가 그리워진다.',
+   ch:[{l:'초콜릿을 사 먹는다', t:'달콤해! 체력이 회복됐다.', e:{hp:18, ecru:-100}},
+       {l:'포장지를 구경하며 코디 아이디어를 얻는다', t:'리본 포장… 이거 옷에도 쓸 수 있겠다!', e:{charm:3}}]},
+  {title:'달의 문', bg:'makai', night:true,
+   intro:'밤하늘의 달, 그 검은 부분이 마계로 통하는 「달의 문」이다. 고향 생각이 난다.',
+   ch:[{l:'마계를 향해 기도한다', t:'달빛이 쏟아져 마력이 차오른다.', e:{magic:6}},
+       {l:'인간계의 야경을 바라본다', t:'인간계도 꽤 예쁘다. 마음이 차분해진다.', e:{hp:10, intel:2}}]},
+  {title:'피에르의 팬클럽', bg:'classroom', who:'pierre',
+   intro:'「더 멤버즈」의 여학생들이 피에르를 둘러싸고 있다. 피에르가 이쪽을 힐끗 본다.',
+   ch:[{l:'못 본 척 지나간다', t:'피에르: "…재미없는 애네." 그런데 왜 신경 쓰이지?', e:{pierre:4}},
+       {l:'"인기 많아서 좋겠네!" 쏘아붙인다', t:'피에르가 처음으로 웃었다. "너, 재밌다."', e:{pierre:8, charm:1}}]},
+  {title:'검은 기운', bg:'road', night:true,
+   intro:'골목 어귀에서 섬뜩한 검은 기운이 느껴진다… 노아르의 냄새다.',
+   ch:[{l:'정체를 확인하러 다가간다', t:'오그르의 그림자가 스쳐 지나갔다! 간신히 도망쳤다.', e:{hp:-15, magic:4}},
+       {l:'로비 선생님께 알린다', t:'로비: "잘했다. 함부로 다가가지 마라." 안전하다.', e:{intel:3}}]},
+  {title:'잃어버린 리본', bg:'road',
+   intro:'길바닥에 귀여운 레이스 리본이 떨어져 있다.',
+   ch:[{l:'주인을 찾아 준다', t:'꼬마 아가씨가 고맙다며 활짝 웃었다. 마음이 따뜻해진다.', e:{charm:3, hp:-5}},
+       {l:'근처 가게에 맡긴다', t:'가게 주인이 사례로 쿠폰을 주었다.', e:{ecru:200}}]},
+  {title:'꽃의 나선', bg:'makai', night:true,
+   intro:'아무도 없는 공원. 마법 「플뢰르=스피랄」을 연습해 볼까?',
+   ch:[{l:'꽃을 한가득 피운다', t:'공원이 꽃밭이 되었다! 마력이 늘었다.', e:{magic:5, hp:-8}},
+       {l:'작은 꽃 한 송이만 정성껏', t:'완벽한 장미 한 송이. 섬세한 마력 조절 성공!', e:{magic:3, intel:2}}]},
+  {title:'마계의 쌍둥이?', bg:'classroom',
+   intro:'마계의 소꿉친구 쌍둥이가 몰래 학교를 엿보고 있다?! …착각이었나.',
+   ch:[{l:'쫓아가 본다', t:'숨이 차도록 달렸지만 아무도 없었다. 체력 단련은 됐다.', e:{hp:-6, charm:1}},
+       {l:'수업에 집중한다', t:'선생님께 칭찬받았다.', e:{intel:4}}]},
+  {title:'옷가게 쇼윈도', bg:'road',
+   intro:'반짝이는 쇼윈도에 고스로리 드레스가 걸려 있다.',
+   ch:[{l:'가게에 들어가 구경한다', t:'점원 언니가 코디 팁을 알려 주었다. (옷장 아이템 할인 감각 UP)', e:{charm:4}},
+       {l:'유리창에 비친 내 모습을 체크', t:'"좋아, 오늘도 귀여워!" 자신감 충전.', e:{charm:2, hp:5}}]}
+];
+
+/* 엔딩 */
+const ENDINGS = {
+  queen:{ title:'♛ 마계의 새 여왕, 쇼콜라 ♛', bg:'makai',
+    text:'달빛이 쏟아지는 마계의 궁전 「팔레」.\n\n캔디 여왕: 「인간계에서 모아 온 하트의 에클이 가장 많은 자, 쇼콜라 메이유르를 차기 여왕으로 인정한다.」\n\n바닐라가 눈물을 글썽이며 가장 먼저 달려와 안긴다.\n"축하해, 쇼콜라! 역시 너는 제일 반짝여."\n\n듀크: "…쳇, 잘했다 꼬맹이." 개굴.\n\n덜렁이 마녀 쇼콜라는 오늘, 마계의 여왕이 되었다.' },
+  pierre:{ title:'♥ 하트 교환 ♥', bg:'makai',
+    text:'시험이 끝난 밤, 달의 문 아래.\n\n피에르: 「쇼콜라. 내 하트는… 처음부터 너에게 가 있었는지도 몰라.」\n\n피에르의 가슴에서 검은 하트가 깨지고, 새빨간 진홍의 하트가 피어난다.\n쇼콜라도 하나뿐인 자신의 하트를 조심스레 꺼낸다.\n\n두 개의 하트가 서로의 가슴으로 날아든다.\n\n그것은 여왕의 왕관보다 반짝이는, 단 하나의 마법이었다.' },
+  vanilla:{ title:'♕ 여왕 바닐라와 친구 쇼콜라 ♕', bg:'makai',
+    text:'캔디 여왕: 「차기 여왕은… 바닐라 뮤.」\n\n쇼콜라는 입술을 꼭 깨물었다. 하지만 곧 환하게 웃으며 박수를 쳤다.\n\n"축하해, 바닐라! 다음엔 절대 안 질 거야!"\n바닐라: "…응! 쇼콜라는 영원히 내 최고의 라이벌이자 친구야."\n\n두 사람의 우정은 어떤 하트보다도 단단한 그린빛으로 빛났다.' },
+  noir:{ title:'✖ 노아르에 물든 하트 ✖', bg:'makai', dark:true,
+    text:'보석함 안의 검은 하트들이 소리 없이 번져 간다.\n\n듀크: 「쇼콜라! 노아르에서 손 떼!!」\n\n질투와 미움으로 물든 하트는 마녀의 영혼까지 좀먹는다.\n쇼콜라의 시야가 점점 어두워지고… 멀리서 로비 선생님의 목소리가 들렸다.\n\n로비: 「…아직 늦지 않았다. 처음부터 다시 시작해라.」\n\n— 하트는, 소중히 다뤄야 하는 것이다.' }
+};
+</script>
+<script>
+/* =========================================================
+   2. 캐릭터 그림 — 전신 레이어 SVG (옷 입히기 지원)
+   ========================================================= */
+let _gid = 0;
+const uid = p => p + (++_gid);
+function starPath(cx,cy,R,r,n=5,rot=-90){
+  let d='';
+  for(let i=0;i<n*2;i++){ const a=(rot+i*180/n)*Math.PI/180, rr=i%2?r:R;
+    d+=(i?'L':'M')+(cx+Math.cos(a)*rr).toFixed(1)+','+(cy+Math.sin(a)*rr).toFixed(1); }
+  return d+'Z';
+}
+function heartD(x,y,s){ /* 중심 x, 위쪽 y, 크기 s */
+  return `M${x},${y+s*.9} C${x-s*.7},${y+s*.45} ${x-s},${y+s*.1} ${x-s},${y-s*.2} C${x-s},${y-s*.55} ${x-s*.5},${y-s*.75} ${x},${y-s*.35} C${x+s*.5},${y-s*.75} ${x+s},${y-s*.55} ${x+s},${y-s*.2} C${x+s},${y+s*.1} ${x+s*.7},${y+s*.45} ${x},${y+s*.9}Z`;
+}
+
+/* ---------- 옷 아이템 ---------- */
+const P = {pink:'#ff7fb6', pink2:'#ffb3d1', hot:'#e0457f', black:'#2a1428', black2:'#4a2a48', white:'#fffafc', purple:'#6a3a8a', gold:'#f3c98b'};
+const CATS = [
+  {k:'hair',  n:'헤어'}, {k:'ribbon',n:'리본'}, {k:'top',n:'상의'}, {k:'bottom',n:'하의'},
+  {k:'dress', n:'원피스'}, {k:'neck',n:'목걸이'}, {k:'ear',n:'귀걸이'}, {k:'shoes',n:'신발'}, {k:'hat',n:'모자'}
+];
+const ITEMS = [
+  /* 헤어 */
+  {id:'long',  cat:'hair', name:'롱 스트레이트', price:0,    charm:0},
+  {id:'twin',  cat:'hair', name:'트윈테일',     price:800,  charm:3},
+  {id:'bun',   cat:'hair', name:'당고 머리',    price:800,  charm:3},
+  {id:'wavy',  cat:'hair', name:'공주 웨이브',  price:1600, charm:5},
+  /* 리본 */
+  {id:'noRibbon',  cat:'ribbon', name:'없음',        price:0,   charm:0},
+  {id:'pinkRibbon',cat:'ribbon', name:'핑크 리본',   price:300, charm:2, theme:'pink'},
+  {id:'laceRibbon',cat:'ribbon', name:'블랙 레이스', price:1200,charm:4, theme:'goth'},
+  {id:'heartPin',  cat:'ribbon', name:'하트 핀',     price:600, charm:3, theme:'pink'},
+  /* 상의 */
+  {id:'capeTop',   cat:'top', name:'케이프 망토', price:0,    charm:1, theme:'pink'},
+  {id:'knit',      cat:'top', name:'핑크 니트',   price:500,  charm:2, theme:'pink'},
+  {id:'blouse',    cat:'top', name:'리본 블라우스',price:900, charm:3, theme:'pink'},
+  {id:'puffBlack', cat:'top', name:'블랙 퍼프',   price:1500, charm:5, theme:'goth'},
+  /* 하의 */
+  {id:'pinkMini',  cat:'bottom', name:'핑크 미니',   price:0,    charm:1, theme:'pink'},
+  {id:'frillBlack',cat:'bottom', name:'블랙 프릴',   price:700,  charm:3, theme:'goth'},
+  {id:'shorts',    cat:'bottom', name:'블랙 반바지', price:500,  charm:2, theme:'goth'},
+  {id:'panier',    cat:'bottom', name:'핑크 캉캉',   price:1200, charm:4, theme:'pink'},
+  /* 원피스 */
+  {id:'noDress',   cat:'dress', name:'입지 않음',     price:0,    charm:0},
+  {id:'gothic',    cat:'dress', name:'고스로리',      price:3000, charm:7, theme:'goth'},
+  {id:'frillDress',cat:'dress', name:'핑크 프릴',     price:2500, charm:6, theme:'pink'},
+  {id:'stripe',    cat:'dress', name:'스트라이프',    price:2000, charm:5, theme:'goth'},
+  {id:'corset',    cat:'dress', name:'하트 코르셋',   price:5000, charm:9, theme:'pink'},
+  /* 목걸이 */
+  {id:'noNeck',    cat:'neck', name:'없음',         price:0,    charm:0},
+  {id:'heartPend', cat:'neck', name:'하트 펜던트',  price:0,    charm:1, theme:'pink'},
+  {id:'starPend',  cat:'neck', name:'별 펜던트',    price:400,  charm:2},
+  {id:'choker',    cat:'neck', name:'리본 초커',    price:600,  charm:3, theme:'goth'},
+  {id:'heartChain',cat:'neck', name:'하트 체인',    price:1500, charm:5, theme:'pink'},
+  /* 귀걸이 */
+  {id:'noEar',     cat:'ear', name:'없음',        price:0,   charm:0},
+  {id:'heartEar',  cat:'ear', name:'하트 귀걸이', price:400, charm:2, theme:'pink'},
+  {id:'starEar',   cat:'ear', name:'별 귀걸이',   price:400, charm:2},
+  {id:'cherryEar', cat:'ear', name:'체리 귀걸이', price:800, charm:3, theme:'goth'},
+  /* 신발 */
+  {id:'purpleBoots',cat:'shoes', name:'보라 부츠',     price:0,    charm:1, theme:'goth'},
+  {id:'pinkLace',   cat:'shoes', name:'핑크 레이스업', price:800,  charm:3, theme:'pink'},
+  {id:'blackLong',  cat:'shoes', name:'블랙 롱부츠',   price:1200, charm:4, theme:'goth'},
+  {id:'maryJane',   cat:'shoes', name:'메리제인',      price:600,  charm:2, theme:'pink'},
+  /* 모자 */
+  {id:'noHat',     cat:'hat', name:'없음',          price:0,    charm:0},
+  {id:'pinkWitch', cat:'hat', name:'핑크 마녀모자', price:0,    charm:2, theme:'pink'},
+  {id:'blackWitch',cat:'hat', name:'블랙 마녀모자', price:1500, charm:4, theme:'goth'},
+  {id:'beret',     cat:'hat', name:'리본 베레모',   price:700,  charm:3, theme:'pink'}
+];
+const ITEM = Object.fromEntries(ITEMS.map(i=>[i.id,i]));
+const DEFAULT_LOOK = {hair:'long', ribbon:'noRibbon', top:'capeTop', bottom:'pinkMini', dress:'noDress', neck:'heartPend', ear:'noEar', shoes:'purpleBoots', hat:'pinkWitch'};
+function gemOf(item){ return item.charm<=2?'orange':item.charm<=4?'pink':item.charm<=6?'violet':'crimson'; }
+
+/* ---------- 파츠 ---------- */
+const SK = '#9b6a8a'; /* 외곽선 */
+function torso(fill, stroke=SK){ return `<path d="M106,208 Q150,198 194,208 L204,240 L194,306 L106,306 L96,240 Z" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`; }
+function sleeves(fill, puff=false, stroke=SK){
+  let s='';
+  for(const f of [1,-1]){
+    const sx=150-f*44, hx=150-f*64;
+    s+=`<path d="M${sx},210 L${hx-f*0},300 L${hx+f*16},306 L${sx+f*10},244 Z" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
+    if(puff) s+=`<ellipse cx="${sx-f*6}" cy="226" rx="18" ry="20" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
+  }
+  return s;
+}
+function skirtShape(fill, len=380, flare=26, stroke=SK){
+  return `<path d="M106,296 L194,296 L${196+flare},${len} Q150,${len+12} ${104-flare},${len} Z" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
+}
+function frills(y, x1, x2, fill){ let s=''; for(let x=x1;x<x2;x+=12) s+=`<circle cx="${x+6}" cy="${y}" r="7" fill="${fill}" stroke="${SK}" stroke-width="1.5"/>`; return s; }
+
+const DRAW = {
+  /* --- 상의 --- */
+  capeTop:()=>`<path d="M100,212 Q60,330 70,420 L150,400 L230,420 Q240,330 200,212 Z" fill="${P.black}" stroke="#000" stroke-width="2" data-layer="back"/>`
+     +torso(P.pink)+sleeves(P.pink)
+     +`<path d="M100,210 Q150,268 200,210 L208,236 Q150,282 92,236 Z" fill="${P.pink}" stroke="${SK}" stroke-width="2.5"/><path d="M138,212 L150,236 L162,212" fill="none" stroke="${P.black}" stroke-width="4"/>`
+     +`<rect x="104" y="290" width="92" height="12" fill="${P.hot}" stroke="${SK}" stroke-width="2"/><rect x="142" y="288" width="16" height="16" fill="none" stroke="${P.gold}" stroke-width="3"/>`,
+  knit:()=>torso(P.pink2)+sleeves(P.pink2)+`<g stroke="#ff8fbf" stroke-width="2" fill="none">${[230,250,270,290].map(y=>`<path d="M104,${y} Q150,${y+6} 196,${y}"/>`).join('')}</g><path d="M128,206 Q150,222 172,206" fill="none" stroke="${P.hot}" stroke-width="5"/>`,
+  blouse:()=>torso(P.white)+sleeves(P.white,true)+`<path d="M126,206 L150,236 L174,206" fill="${P.pink2}" stroke="${SK}" stroke-width="2"/><path d="M150,236 l-18,-10 l2,20 Z M150,236 l18,-10 l-2,20 Z" fill="${P.pink}" stroke="${SK}" stroke-width="1.5"/><circle cx="150" cy="236" r="5" fill="${P.hot}"/>${[256,276,296].map(y=>`<circle cx="150" cy="${y}" r="3" fill="${P.pink}"/>`).join('')}`,
+  puffBlack:()=>torso(P.black)+sleeves(P.black,true,'#000')+`<path d="M120,206 L150,226 L180,206 L178,214 L150,234 L122,214Z" fill="#fff"/>${frills(208,120,180,'#fff')}<path d="M150,230 V300" stroke="${P.pink}" stroke-width="3" stroke-dasharray="4 6"/>`,
+  /* --- 하의 --- */
+  pinkMini:()=>skirtShape(P.pink,372,22)+`<path d="M90,368 Q150,380 210,368" stroke="#fff" stroke-width="3" fill="none"/>`,
+  frillBlack:()=>skirtShape(P.black,380,28,'#000')+frills(380,80,220,'#fff')+skirtShape(P.black2,360,20,'#000'),
+  shorts:()=>`<path d="M106,296 L194,296 L200,350 L154,350 L150,322 L146,350 L100,350 Z" fill="${P.black}" stroke="#000" stroke-width="2.5"/><rect x="106" y="296" width="88" height="10" fill="${P.hot}"/><circle cx="182" cy="320" r="5" fill="${P.pink}"/>`,
+  panier:()=>skirtShape('#fff',384,34)+skirtShape(P.pink2,372,28)+skirtShape(P.pink,356,22)+frills(384,72,228,'#fff'),
+  /* --- 원피스 --- */
+  gothic:()=>torso(P.black,'#000')+sleeves(P.black,true,'#000')+skirtShape(P.black,392,36,'#000')+frills(392,66,234,P.pink)
+     +`<path d="M120,240 L180,240 L176,296 L124,296Z" fill="${P.pink}" stroke="#000" stroke-width="1.5"/>${[250,264,278].map(y=>`<path d="M126,${y} L174,${y+8} M174,${y} L126,${y+8}" stroke="#000" stroke-width="2"/>`).join('')}${frills(208,118,182,'#fff')}`,
+  frillDress:()=>torso(P.pink)+sleeves(P.pink2,true)+skirtShape(P.pink,388,34)+skirtShape(P.pink2,360,24)+frills(388,70,230,'#fff')+frills(360,82,218,'#fff')
+     +`<path d="M150,214 l-20,-10 l2,22 Z M150,214 l20,-10 l-2,22 Z" fill="${P.hot}"/><circle cx="150" cy="214" r="6" fill="${P.hot}"/>`,
+  stripe:()=>{ let s=torso(P.black,'#000')+sleeves(P.black,false,'#000')+skirtShape('#fff',384,30,'#000');
+     for(let x=70;x<232;x+=14) s+=`<path d="M${x},${296+(Math.abs(150-x)*.3)} L${x+4},384" stroke="${P.black}" stroke-width="7" opacity=".9"/>`;
+     return s+`<path d="M104,300 L196,300" stroke="${P.hot}" stroke-width="6"/>`+frills(208,122,178,'#fff'); },
+  corset:()=>torso(P.pink)+sleeves(P.black,true,'#000')+skirtShape(P.black,392,38,'#000')+skirtShape(P.pink,372,30)+frills(392,64,236,'#fff')
+     +`<path d="M116,232 L184,232 L178,300 L122,300Z" fill="${P.black}"/>${[244,258,272,286].map(y=>`<path d="M134,${y} L166,${y+6} M166,${y} L134,${y+6}" stroke="${P.pink}" stroke-width="2"/>`).join('')}<path d="${heartD(150,214,12)}" fill="${P.hot}" stroke="#fff" stroke-width="2"/>`,
+  /* --- 마계/특수 의상 --- */
+  vanillaDress:()=>torso('#cfe6ff')+sleeves('#eaf4ff',true)+skirtShape('#cfe6ff',386,30)+frills(386,70,230,'#fff')+`<path d="M150,214 l-18,-9 l2,20 Z M150,214 l18,-9 l-2,20 Z" fill="#8fa6ff"/><circle cx="150" cy="214" r="5" fill="#8fa6ff"/>`,
+  queenDress:()=>torso('#f4e8ff')+sleeves('#f4e8ff',true)+`<path d="M106,296 L194,296 L250,600 Q150,620 50,600 Z" fill="#e8d6ff" stroke="${SK}" stroke-width="2.5"/>`+frills(600,52,248,P.gold)+`<path d="M110,210 Q150,250 190,210" fill="none" stroke="${P.gold}" stroke-width="4"/>`,
+  /* --- 목걸이 --- */
+  heartPend:()=>`<path d="M128,208 Q150,240 172,208" fill="none" stroke="${P.gold}" stroke-width="2"/><path d="${heartD(150,236,9)}" fill="${P.hot}" stroke="${P.gold}" stroke-width="2"/><circle cx="147" cy="235" r="2" fill="#fff"/>`,
+  starPend:()=>`<path d="M128,208 Q150,240 172,208" fill="none" stroke="#c9cbe0" stroke-width="2"/><path d="${starPath(150,240,10,4)}" fill="#ffe36b" stroke="#c9a02a" stroke-width="1.5"/>`,
+  choker:()=>`<rect x="138" y="198" width="24" height="8" rx="3" fill="${P.black}"/><path d="M150,202 l-10,-6 l0,12Z M150,202 l10,-6 l0,12Z" fill="${P.black}"/><path d="${heartD(150,210,5)}" fill="${P.hot}"/>`,
+  heartChain:()=>`<path d="M126,208 Q150,236 174,208" fill="none" stroke="${P.gold}" stroke-width="2" stroke-dasharray="3 2"/>${[[134,222],[150,232],[166,222]].map(([x,y],i)=>`<path d="${heartD(x,y,i===1?9:6)}" fill="${i===1?P.hot:P.pink}" stroke="${P.gold}" stroke-width="1.5"/>`).join('')}`,
+  pearl:()=>`<path d="M126,208 Q150,232 174,208" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray=".1 7" stroke-linecap="round"/>`,
+  /* --- 귀걸이 (귀 위치 x≈92/208, y≈158) --- */
+  heartEar:()=>[92,208].map(x=>`<path d="M${x},160 v8" stroke="${P.gold}" stroke-width="1.5"/><path d="${heartD(x,172,6)}" fill="${P.hot}" stroke="${P.gold}" stroke-width="1"/>`).join(''),
+  starEar:()=>[92,208].map(x=>`<path d="M${x},160 v8" stroke="${P.gold}" stroke-width="1.5"/><path d="${starPath(x,175,7,3)}" fill="#ffe36b" stroke="#c9a02a" stroke-width="1"/>`).join(''),
+  cherryEar:()=>[92,208].map(x=>`<path d="M${x},160 q4,8 -3,14 M${x},160 q6,8 6,14" stroke="#3a7a3a" stroke-width="1.5" fill="none"/><circle cx="${x-3}" cy="177" r="4.5" fill="#c8102e"/><circle cx="${x+6}" cy="177" r="4.5" fill="#c8102e"/>`).join(''),
+  /* --- 신발 (다리 x 128~146 / 154~172, 발 y≈580~610) --- */
+  purpleBoots:()=>[137,163].map(x=>`<path d="M${x-12},548 L${x+12},548 L${x+13},592 Q${x+26},596 ${x+24},610 L${x-14},610 Z" fill="${P.purple}" stroke="#3a1a50" stroke-width="2"/><rect x="${x-12}" y="582" width="25" height="7" fill="${P.black}"/><rect x="${x-4}" y="580" width="9" height="11" fill="none" stroke="${P.gold}" stroke-width="2"/>`).join(''),
+  pinkLace:()=>[137,163].map(x=>`<path d="M${x-12},540 L${x+12},540 L${x+13},592 Q${x+26},596 ${x+24},610 L${x-14},610 Z" fill="${P.pink}" stroke="${SK}" stroke-width="2"/>${[552,564,576].map(y=>`<path d="M${x-7},${y} L${x+7},${y+6} M${x+7},${y} L${x-7},${y+6}" stroke="#fff" stroke-width="1.6"/>`).join('')}`).join(''),
+  blackLong:()=>[137,163].map(x=>`<path d="M${x-13},470 L${x+13},470 L${x+13},592 Q${x+26},596 ${x+24},610 L${x-14},610 Z" fill="${P.black}" stroke="#000" stroke-width="2"/><path d="M${x-13},476 h26" stroke="${P.pink}" stroke-width="4"/><path d="${heartD(x,486,5)}" fill="${P.pink}"/>`).join(''),
+  maryJane:()=>[137,163].map(x=>`<path d="M${x-12},588 Q${x},582 ${x+12},588 Q${x+26},596 ${x+24},610 L${x-14},610 Z" fill="${P.hot}" stroke="${SK}" stroke-width="2"/><path d="M${x-12},590 h24" stroke="${P.black}" stroke-width="3"/>`).join(''),
+  whiteStrap:()=>[137,163].map(x=>`<path d="M${x-12},588 Q${x},582 ${x+12},588 Q${x+26},596 ${x+24},610 L${x-14},610 Z" fill="#fff" stroke="${SK}" stroke-width="2"/><path d="M${x-12},590 h24" stroke="#8fa6ff" stroke-width="3"/>`).join(''),
+  /* --- 리본 --- */
+  pinkRibbon:()=>`<g transform="translate(196,78) rotate(18)"><path d="M0,0 L-22,-14 L-20,14 Z M0,0 L22,-14 L20,14 Z" fill="${P.pink}" stroke="${SK}" stroke-width="2"/><circle r="6" fill="${P.hot}"/></g>`,
+  laceRibbon:()=>`<g transform="translate(150,58)"><path d="M0,0 L-40,-20 Q-50,0 -40,20 Z M0,0 L40,-20 Q50,0 40,20 Z" fill="${P.black}" stroke="#000" stroke-width="2"/>${frills(22,-40,40,'#fff').replace(/cy="22"/g,'cy="20" r="4"')}<circle r="8" fill="${P.hot}"/></g>`,
+  heartPin:()=>`<path d="${heartD(196,84,11)}" fill="${P.hot}" stroke="#fff" stroke-width="2"/><path d="${heartD(210,100,6)}" fill="${P.pink}" stroke="#fff" stroke-width="1.5"/>`,
+  blueRibbon:()=>`<g transform="translate(150,56)"><path d="M0,0 L-34,-16 Q-40,0 -34,16 Z M0,0 L34,-16 Q40,0 34,16 Z" fill="#8fa6ff" stroke="#5a6ab8" stroke-width="2"/><circle r="7" fill="#c9d6ff"/></g>`,
+  /* --- 모자 --- */
+  pinkWitch:()=>`<g transform="rotate(-10 150 60)"><path d="M98,66 Q140,40 160,-10 Q182,-40 236,-30 Q196,-14 190,20 L204,66 Z" fill="${P.pink}" stroke="${SK}" stroke-width="2.5"/><path d="M100,58 Q150,44 204,58 L206,70 Q150,58 98,70Z" fill="${P.black}"/><ellipse cx="150" cy="70" rx="86" ry="16" fill="${P.pink}" stroke="${SK}" stroke-width="2.5"/></g>`,
+  blackWitch:()=>`<g transform="rotate(-8 150 60)"><path d="M98,66 Q130,30 140,-30 Q190,-20 196,10 L204,66 Z" fill="${P.black}" stroke="#000" stroke-width="2.5"/><path d="M100,56 Q150,44 204,56 L206,68 Q150,56 98,68Z" fill="${P.pink}"/><ellipse cx="150" cy="70" rx="86" ry="16" fill="${P.black}" stroke="#000" stroke-width="2.5"/><path d="${heartD(186,52,8)}" fill="${P.hot}"/><path d="${starPath(140,-26,7,3)}" fill="#ffe36b"/></g>`,
+  beret:()=>`<g transform="rotate(-12 150 60)"><ellipse cx="150" cy="52" rx="66" ry="26" fill="${P.pink}" stroke="${SK}" stroke-width="2.5"/><circle cx="150" cy="26" r="5" fill="${P.hot}"/><path d="M194,58 l18,-10 l-2,20 Z M194,58 l20,10 l-14,8Z" fill="${P.black}"/></g>`
+};
+
+/* ---------- 머리카락 ---------- */
+function backHair(st, g){
+  switch(st){
+    case 'long':  return `<path d="M88,120 Q66,250 78,430 Q100,446 118,428 L120,250 L180,250 L182,428 Q200,446 222,430 Q234,250 212,120 Z" fill="${g}"/>`;
+    case 'wavy':  return `<path d="M88,120 Q60,220 80,300 Q60,350 84,400 Q66,440 100,460 Q120,430 120,250 L180,250 Q180,430 200,460 Q234,440 216,400 Q240,350 220,300 Q240,220 212,120 Z" fill="${g}"/>`;
+    case 'twin':  return `<path d="M90,110 Q60,130 64,240 Q58,330 84,420 Q96,380 92,300 Q100,200 104,130Z M210,110 Q240,130 236,240 Q242,330 216,420 Q204,380 208,300 Q200,200 196,130Z" fill="${g}"/><path d="M88,120 Q84,180 100,200 L200,200 Q216,180 212,120Z" fill="${g}"/>`;
+    case 'bun':   return `<path d="M88,120 Q80,190 100,214 L200,214 Q220,190 212,120Z" fill="${g}"/><circle cx="96" cy="66" r="28" fill="${g}"/><circle cx="204" cy="66" r="28" fill="${g}"/>`;
+    case 'curly': return `<path d="M88,120 Q80,190 100,212 L200,212 Q220,190 212,120Z" fill="${g}"/>${[[90,190],[104,212],[124,222],[176,222],[196,212],[210,190]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="16" fill="${g}"/>`).join('')}`;
+    case 'queen': return `<path d="M86,120 Q70,250 96,330 L204,330 Q230,250 214,120Z" fill="${g}"/><circle cx="150" cy="40" r="40" fill="${g}"/>`;
+    case 'rocker':return `<path d="M88,110 L70,240 L94,214 L96,250 L114,220 L186,220 L204,250 L206,214 L230,240 L212,110Z" fill="${g}"/>`;
+    case 'boyLong': return `<path d="M88,120 Q84,196 104,214 L196,214 Q216,196 212,120Z" fill="${g}"/>`;
+    default: return '';
+  }
+}
+function frontHair(st, g, c2){
+  if(st==='boySpiky') return `<path d="M84,140 Q78,62 150,52 Q222,62 216,140 L206,108 L194,130 L184,96 L168,124 L158,90 L146,122 L132,90 L122,126 L110,98 L98,132 Z M100,66 L86,36 L120,56 L132,24 L150,52 L176,22 L182,56 L220,40 L206,72Z" fill="${g}"/>`;
+  if(st==='boyNeat')  return `<path d="M86,140 Q80,62 150,56 Q220,62 214,140 L204,116 Q186,96 150,104 L138,88 Q118,102 104,112 L94,138 Z" fill="${g}"/>`;
+  if(st==='boyMessy') return `<path d="M84,146 Q76,60 150,54 Q224,60 216,146 L208,112 L192,134 L186,102 L168,130 L160,96 L146,128 L132,96 L120,132 L108,104 L96,140 Z" fill="${g}" stroke="${c2}" stroke-width="2"/>`;
+  if(st==='boyLong' || st==='rocker') return `<path d="M84,150 Q76,58 150,52 Q224,58 216,150 L210,110 Q196,128 186,100 Q170,126 156,96 Q144,128 128,98 Q112,128 100,108 L90,150 Z" fill="${g}"/>`;
+  return `<path d="M86,146 Q80,58 150,52 Q220,58 214,146 L204,110 L192,130 L180,98 L166,126 L154,94 L142,126 L128,96 L116,128 L104,102 L94,138 Z" fill="${g}"/>`;
+}
+
+/* ---------- 얼굴 ---------- */
+function drawFace(c, face, g){
+  let s='';
+  s+=`<ellipse cx="116" cy="166" rx="14" ry="7" fill="url(#${g}b)"/><ellipse cx="184" cy="166" rx="14" ry="7" fill="url(#${g}b)"/>`;
+  for(const [ex,fl] of [[124,1],[176,-1]]){
+    if(face==='smile'){
+      s+=`<path d="M${ex-14},146 Q${ex},130 ${ex+14},146" fill="none" stroke="#3a1a30" stroke-width="4.5" stroke-linecap="round"/>`;
+      s+=`<path d="M${ex+fl*-14},141 l${fl*-6},-4" stroke="#3a1a30" stroke-width="3" stroke-linecap="round"/>`;
+    }else{
+      const p = face==='panic', ir=p?7:12, iry=p?9:16;
+      s+=`<ellipse cx="${ex}" cy="144" rx="14" ry="18" fill="#fff"/>`;
+      s+=`<ellipse cx="${ex}" cy="${p?143:146}" rx="${ir}" ry="${iry}" fill="url(#${g}i)"/>`;
+      s+=`<ellipse cx="${ex}" cy="${p?143:145}" rx="${ir*.45}" ry="${iry*.45}" fill="#140a14"/>`;
+      s+=`<circle cx="${ex-4}" cy="${p?139:138}" r="${p?2.5:5}" fill="#fff"/><circle cx="${ex+5}" cy="153" r="${p?1.2:2.5}" fill="#fff"/>`;
+      if(!p) s+=`<path d="${starPath(ex+6,139,3.5,1.4,4,0)}" fill="#fff"/>`;
+      s+=`<path d="M${ex-16},132 Q${ex},121 ${ex+16},132" fill="none" stroke="#3a1a30" stroke-width="4.5" stroke-linecap="round"/>`;
+      s+=`<path d="M${ex+fl*-16},131 l${fl*-7},-6 M${ex+fl*-15},135 l${fl*-7},-1" stroke="#3a1a30" stroke-width="2.6" stroke-linecap="round"/>`;
+    }
+    const by = face==='panic'?112:116, t = face==='panic'?fl*-5:0;
+    s+=`<path d="M${ex-10},${by+t} Q${ex},${by-4} ${ex+10},${by-t}" fill="none" stroke="${c.hair2}" stroke-width="2.6" stroke-linecap="round"/>`;
+  }
+  if(c.glasses) s+=`<g fill="none" stroke="#5a5a7a" stroke-width="2.5"><rect x="104" y="126" width="40" height="36" rx="10"/><rect x="156" y="126" width="40" height="36" rx="10"/><path d="M144,142 L156,142"/></g>`;
+  if(c.shades) s+=`<path d="M100,132 L146,132 L142,154 Q124,160 106,152Z M154,132 L200,132 L194,152 Q176,160 158,154Z" fill="#1a1020" opacity=".92"/><path d="M146,136 L154,136" stroke="#1a1020" stroke-width="3"/>`;
+  if(face==='smile') s+=`<path d="M138,170 Q150,188 162,170 Z" fill="#e8607f" stroke="#a53a5a" stroke-width="2"/>`;
+  else if(face==='panic') s+=`<path d="M136,176 q4,-5 7,0 q4,5 7,0 q4,-5 7,0 q4,5 7,0" fill="none" stroke="#a53a5a" stroke-width="2.4" stroke-linecap="round"/>`;
+  else s+=`<path d="M142,173 Q150,179 158,173" fill="none" stroke="#a53a5a" stroke-width="2.4" stroke-linecap="round"/>`;
+  return s;
+}
+
+/* ---------- 전신 그리기 ---------- */
+/* id: PEOPLE 또는 BOYS 키. look: 쇼콜라 코디. crop: 'full' | 'upper' | viewBox 문자열 */
+function drawPerson(id, face='normal', crop='upper', look=null){
+  const base = PEOPLE[id] && !PEOPLE[id].pet ? PEOPLE[id] : BOYS[id];
+  if(PEOPLE[id] && PEOPLE[id].pet) return drawPet(PEOPLE[id].pet, face);
+  const c = Object.assign({}, base);
+  if(id==='pierre') Object.assign(c, PEOPLE.pierre);
+  const L = id==='chocolat' ? Object.assign({}, DEFAULT_LOOK, look||{}) : Object.assign({}, c.look||{});
+  const boy = c.boy || BOYS[id] && !BOYS[id].special;
+  const g = uid('p'), hg = `url(#${g}h)`;
+  const vb = crop==='full' ? '0 -50 300 670' : crop==='upper' ? '40 -40 220 380' : crop;
+  let s = `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg"><defs>
+    <linearGradient id="${g}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.hair}"/><stop offset="1" stop-color="${c.hair2}"/></linearGradient>
+    <linearGradient id="${g}i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0a1a"/><stop offset=".5" stop-color="${c.eye}"/><stop offset="1" stop-color="#fff" stop-opacity=".9"/></linearGradient>
+    <radialGradient id="${g}b"><stop offset="0" stop-color="#ff7fa8" stop-opacity=".7"/><stop offset="1" stop-color="#ff7fa8" stop-opacity="0"/></radialGradient>
+    <pattern id="${g}st" width="20" height="16" patternUnits="userSpaceOnUse"><rect width="20" height="8" fill="#fff"/><rect y="8" width="20" height="8" fill="#2a1428"/></pattern></defs>`;
+  const hairSt = boy ? (c.style||L.hair||'boyNeat') : L.hair;
+  /* 망토(뒤) */
+  if(!boy && L.top==='capeTop' && (!L.dress || L.dress==='noDress')) s += DRAW.capeTop().match(/<path[^>]*data-layer="back"\/>/)[0];
+  s += backHair(id==='pierre'?'boyLong':id==='robin'?'rocker':hairSt, hg);
+  if(boy){
+    const u = (c.look&&c.look.uniform) || c.uniform || '#3c4a7a', tie = (c.look&&c.look.tie) || c.tie;
+    s+=[137,163].map(x=>`<rect x="${x-13}" y="300" width="26" height="290" fill="#2a2a3a"/><path d="M${x-14},590 L${x+12},590 Q${x+26},598 ${x+24},610 L${x-14},610Z" fill="#3a2a2a"/>`).join('');
+    s+=torso(u,'#1a1a2a')+sleeves(u,false,'#1a1a2a');
+    s+=`<path d="M128,206 L150,270 L172,206 Z" fill="#fff"/><path d="M145,214 L155,214 L157,262 L150,272 L143,262Z" fill="${tie}"/>`;
+    s+=`<path d="M128,206 L150,280 L120,300 L106,306 L104,230Z M172,206 L150,280 L180,300 L194,306 L196,230Z" fill="${u}" stroke="#1a1a2a" stroke-width="2"/>`;
+    if(c.look&&c.look.jacket) s+=`<path d="M104,214 L130,300 M196,214 L170,300" stroke="#e0457f" stroke-width="3"/><path d="${starPath(116,262,6,2.5)}" fill="#e0457f"/>`;
+    else s+=`<circle cx="118" cy="270" r="5" fill="${P.gold}"/>`;
+  }else{
+    /* 다리 + 줄무늬 스타킹 */
+    const leg = id==='chocolat' ? `url(#${g}st)` : c.skin;
+    s+=[137,163].map(x=>`<rect x="${x-11}" y="330" width="22" height="270" rx="10" fill="${leg}" stroke="${SK}" stroke-width="2"/>`).join('');
+    s+=(DRAW[L.shoes]||(()=>''))();
+    const hasDress = L.dress && L.dress!=='noDress';
+    if(hasDress) s+=DRAW[L.dress]();
+    else { s+=(DRAW[L.bottom]||(()=>''))(); s+=(DRAW[L.top]||(()=>'')) ().replace(/<path[^>]*data-layer="back"\/>/,''); }
+  }
+  /* 손 */
+  s+=`<circle cx="94" cy="312" r="9" fill="${c.skin}" stroke="${SK}" stroke-width="1.5"/><circle cx="206" cy="312" r="9" fill="${c.skin}" stroke="${SK}" stroke-width="1.5"/>`;
+  /* 목 + 얼굴 */
+  s+=`<rect x="139" y="180" width="22" height="34" fill="${c.skin}"/><path d="M139,200 Q150,210 161,200 L161,212 L139,212Z" fill="#000" opacity=".08"/>`;
+  if(!boy) s+=(DRAW[L.neck]||(()=>''))();
+  s+=`<ellipse cx="150" cy="112" rx="66" ry="64" fill="${hg}"/>`;
+  if(c.ears) s+=`<path d="M96,138 L66,112 L100,160Z M204,138 L234,112 L200,160Z" fill="${c.skin}" stroke="${SK}" stroke-width="1.5"/>`;
+  else s+=`<ellipse cx="92" cy="146" rx="8" ry="12" fill="${c.skin}"/><ellipse cx="208" cy="146" rx="8" ry="12" fill="${c.skin}"/>`;
+  s+=`<path d="M92,118 Q92,182 150,196 Q208,182 208,118 Z" fill="${c.skin}"/>`;
+  s+=drawFace(c, face, g);
+  if(!boy) s+=(DRAW[L.ear]||(()=>''))();
+  s+=frontHair(id==='pierre'?'boyLong':id==='robin'?'rocker':hairSt, hg, c.hair2);
+  s+=`<path d="M110,72 Q128,62 148,62" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".5"/>`;
+  if(L.hair==='twin' && !boy) s+=`<circle cx="94" cy="104" r="8" fill="${P.hot}"/><circle cx="206" cy="104" r="8" fill="${P.hot}"/>`;
+  if(!boy) s+=(DRAW[L.ribbon]||(()=>''))();
+  if(!boy) s+=(DRAW[L.hat]||(()=>''))();
+  if(c.crown) s+=`<path d="M112,52 L124,18 L138,42 L150,10 L162,42 L176,18 L188,52 Z" fill="${P.gold}" stroke="#b07a30" stroke-width="2"/><circle cx="150" cy="30" r="5" fill="${P.hot}"/>`;
+  if(face==='panic') s+=`<path d="M214,98 Q224,114 214,122 Q204,114 214,98Z" fill="#bfe6ff" stroke="#6fb2e0" stroke-width="2"/>`;
+  if(face==='smile') s+=`<path d="${starPath(232,110,9,3.2,4,0)}" fill="#fff6a8"/><path d="${heartD(70,150,7)}" fill="#ffb3d1"/>`;
+  return s+'</svg>';
+}
+
+/* ---------- 사역마 ---------- */
+function drawPet(kind, face){
+  if(kind==='frog') return `<svg viewBox="0 0 120 110"><ellipse cx="60" cy="72" rx="46" ry="34" fill="#d8283a" stroke="#4a0a12" stroke-width="3"/>
+    ${[40,58,76].map(x=>`<path d="M${x},44 Q${x+4},72 ${x},104" stroke="#1a0a0e" stroke-width="7" fill="none"/>`).join('')}
+    <circle cx="36" cy="38" r="17" fill="#d8283a" stroke="#4a0a12" stroke-width="3"/><circle cx="84" cy="38" r="17" fill="#d8283a" stroke="#4a0a12" stroke-width="3"/>
+    <circle cx="36" cy="38" r="10" fill="#fff"/><circle cx="84" cy="38" r="10" fill="#fff"/>
+    ${face==='panic'?'<path d="M30,38 h12 M78,38 h12" stroke="#000" stroke-width="3"/>':'<path d="M28,40 Q36,30 44,40 M76,40 Q84,30 92,40" stroke="#000" stroke-width="3" fill="none"/>'}
+    <path d="M40,74 Q60,${face==='smile'?92:80} 80,74" stroke="#4a0a12" stroke-width="3" fill="none"/></svg>`;
+  return `<svg viewBox="0 0 120 110"><circle cx="30" cy="30" r="20" fill="#fff" stroke="#c9b8d8" stroke-width="3"/><circle cx="90" cy="30" r="20" fill="#fff" stroke="#c9b8d8" stroke-width="3"/>
+    <circle cx="30" cy="30" r="11" fill="#ffd0e3"/><circle cx="90" cy="30" r="11" fill="#ffd0e3"/>
+    <ellipse cx="60" cy="68" rx="40" ry="36" fill="#fff" stroke="#c9b8d8" stroke-width="3"/>
+    <circle cx="46" cy="62" r="6" fill="#4a2a6a"/><circle cx="74" cy="62" r="6" fill="#4a2a6a"/><circle cx="44" cy="60" r="2" fill="#fff"/><circle cx="72" cy="60" r="2" fill="#fff"/>
+    <ellipse cx="60" cy="76" rx="5" ry="4" fill="#ff7fb6"/><path d="M50,84 Q60,${face==='smile'?92:86} 70,84" stroke="#a06080" stroke-width="2" fill="none"/>
+    <path d="M100,92 Q118,96 112,76" stroke="#ffb3d1" stroke-width="4" fill="none"/>
+    <path d="M60,32 l-12,-8 l2,14Z M60,32 l12,-8 l-2,14Z" fill="#8fa6ff"/></svg>`;
+}
+</script>
+<script>
+/* =========================================================
+   3. 배경 / 하트 / 보석함 / 장식
+   ========================================================= */
+function drawHeart(type, size=34){
+  const h = HEARTS[type], g = uid('h');
+  const glow = type==='noir' ? '#b04aff' : type==='blanc' ? '#9fd4ff' : '#fff';
+  return `<svg viewBox="-24 -24 48 48" width="${size}" height="${size}"><defs>
+    <radialGradient id="${g}" cx=".35" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="${h.c1}"/><stop offset="1" stop-color="${h.c2}"/></radialGradient>
+    <filter id="${g}f"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
+    <path d="${heartD(0,-6,20)}" fill="${glow}" opacity=".55" filter="url(#${g}f)"/>
+    <path d="${heartD(0,-6,18)}" fill="url(#${g})" stroke="${type==='noir'?'#6a2a8a':'#fff'}" stroke-width="1.6"/>
+    <path d="M0,-12 L-9,-2 L0,10 L9,-2Z" fill="#fff" opacity=".22"/><path d="M-9,-2 H9" stroke="#fff" stroke-width=".8" opacity=".5"/>
+    <ellipse cx="-8" cy="-11" rx="4" ry="2.4" fill="#fff" opacity=".85" transform="rotate(-30 -8 -11)"/></svg>`;
+}
+/* 하트 모양 보석함 */
+function drawCase(n){
+  return `<svg viewBox="0 0 100 92"><defs><linearGradient id="cs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8fbf"/><stop offset="1" stop-color="#c8235e"/></linearGradient></defs>
+    <path d="${heartD(50,30,44)}" fill="url(#cs)" stroke="${P.gold}" stroke-width="4"/>
+    <path d="${heartD(50,30,34)}" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 4" opacity=".8"/>
+    <rect x="34" y="18" width="32" height="18" rx="6" fill="#6ac8e8" stroke="${P.gold}" stroke-width="3"/>
+    <path d="${heartD(50,26,6)}" fill="#fff" opacity=".8"/>
+    ${n>0?`<path d="${starPath(76,10,7,2.5,4,0)}" fill="#fff"><animate attributeName="opacity" values="1;.2;1" dur="1.4s" repeatCount="indefinite"/></path>`:''}</svg>`;
+}
+/* 리본 코너 장식 */
+function drawCorner(){
+  return `<svg viewBox="0 0 64 64"><path d="M4,4 Q40,8 60,30" stroke="#ff7fb6" stroke-width="6" fill="none"/><path d="M4,4 Q8,40 30,60" stroke="#ff7fb6" stroke-width="6" fill="none"/>
+    <path d="M20,20 L4,8 L6,30Z M20,20 L8,4 L30,6Z" fill="#ff5fa2" stroke="#fff" stroke-width="1.5"/>
+    <path d="${heartD(20,16,9)}" fill="#e0457f" stroke="${P.gold}" stroke-width="2"/><circle cx="17" cy="15" r="2" fill="#fff"/></svg>`;
+}
+/* 마법책 표지 문양 */
+function drawEmblem(){
+  return `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="${P.gold}" stroke-width="3"/><circle cx="60" cy="60" r="44" fill="none" stroke="${P.gold}" stroke-width="1" stroke-dasharray="3 4"/>
+    <path d="M60,16 A44,44 0 1,0 60,104 A34,34 0 1,1 60,16Z" fill="${P.gold}" opacity=".85"/>
+    <path d="${heartD(66,52,18)}" fill="#ff5fa2" stroke="${P.gold}" stroke-width="2.5"/>
+    ${[[30,30],[96,40],[90,92],[34,88]].map(([x,y])=>`<path d="${starPath(x,y,5,2,4,0)}" fill="${P.gold}"/>`).join('')}</svg>`;
+}
+/* 카테고리 아이콘 */
+const CAT_ICON = {
+  hair:'<path d="M6,24 Q4,6 16,4 Q28,6 26,24 L22,14 L16,18 L10,14Z" fill="#9b6a8a"/>',
+  ribbon:'<path d="M16,16 L4,8 L4,24Z M16,16 L28,8 L28,24Z" fill="#9b6a8a"/><circle cx="16" cy="16" r="4" fill="#9b6a8a"/>',
+  top:'<path d="M10,6 L4,12 L8,16 L10,14 L10,28 L22,28 L22,14 L24,16 L28,12 L22,6 Q16,10 10,6Z" fill="#9b6a8a"/>',
+  bottom:'<path d="M10,6 L22,6 L28,26 L4,26Z" fill="#9b6a8a"/>',
+  dress:'<path d="M12,4 L20,4 L20,10 L26,28 L6,28 L12,10Z" fill="#9b6a8a"/>',
+  neck:'<path d="M6,6 Q16,22 26,6" stroke="#9b6a8a" stroke-width="2" fill="none"/><path d="'+'M16,26 C10,22 9,19 10,17 C11,15 14,15 16,18 C18,15 21,15 22,17 C23,19 22,22 16,26Z'+'" fill="#9b6a8a"/>',
+  ear:'<circle cx="10" cy="8" r="2" fill="#9b6a8a"/><circle cx="22" cy="8" r="2" fill="#9b6a8a"/><path d="M10,10 v6 M22,10 v6" stroke="#9b6a8a" stroke-width="2"/><path d="M10,26 C6,22 6,18 10,18 C14,18 14,22 10,26Z M22,26 C18,22 18,18 22,18 C26,18 26,22 22,26Z" fill="#9b6a8a"/>',
+  shoes:'<path d="M6,10 L12,10 L14,20 Q26,20 28,26 L4,26Z" fill="#9b6a8a"/>',
+  hat:'<path d="M16,2 L22,22 L10,22Z" fill="#9b6a8a"/><ellipse cx="16" cy="23" rx="13" ry="4" fill="#9b6a8a"/>'
+};
+
+function skyColors(slot){ return slot===0?['#bfe6ff','#ffe8f2']:slot===1?['#ff9eb0','#ffd8b8']:['#1b0a3a','#5a2a7a']; }
+function stars(n,h,seed=1){
+  let s='', r=seed; const rnd=()=>{ r=(r*9301+49297)%233280; return r/233280; };
+  for(let i=0;i<n;i++){ const x=rnd()*400,y=rnd()*h,z=1+rnd()*2.5;
+    s+= i%4===0 ? `<path d="${starPath(x,y,z*2,z*.7,4,0)}" fill="#fff"><animate attributeName="opacity" values=".9;.2;.9" dur="${2+rnd()*3}s" repeatCount="indefinite"/></path>` : `<circle cx="${x}" cy="${y}" r="${z*.6}" fill="#fff" opacity="${.4+rnd()*.6}"/>`; }
+  return s;
+}
+function crescent(cx,cy,r){ const m=uid('mk'); return `<mask id="${m}"><rect x="${cx-r*2}" y="${cy-r*2}" width="${r*4}" height="${r*4}" fill="#fff"/><circle cx="${cx+r*.45}" cy="${cy-r*.2}" r="${r*.88}" fill="#000"/></mask><g mask="url(#${m})"><circle cx="${cx}" cy="${cy}" r="${r*1.5}" fill="#fff6d0" opacity=".15"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff6d0"/></g>`; }
+function sakura(x,y,s){ return `<g transform="translate(${x},${y}) scale(${s})"><path d="M0,0 Q-6,-8 0,-14 Q6,-8 0,0" fill="#ffd0e3"/><path d="M0,0 Q8,-4 12,4 Q4,8 0,0" fill="#ffc0da"/></g>`; }
+
+function drawBG(type, slot=0){
+  const [s1,s2]=skyColors(slot), g=uid('bg'), night=slot===2;
+  let s=`<defs><linearGradient id="${g}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s2}"/></linearGradient>
+    <radialGradient id="${g}c"><stop offset="0" stop-color="#ffe9a8" stop-opacity=".9"/><stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/></radialGradient></defs>`;
+  if(type==='classroom'){
+    s+=`<rect width="400" height="600" fill="${night?'#c8b8de':'#fff0e6'}"/><rect width="400" height="30" fill="#f2d6c4"/>`;
+    for(const wx of [20,150,280]) s+=`<rect x="${wx}" y="60" width="100" height="150" fill="url(#${g}s)" stroke="#e4c4a8" stroke-width="6"/><path d="M${wx+50},60 v150 M${wx},135 h100" stroke="#e4c4a8" stroke-width="4"/>${night?'':sakura(wx+30,110,1.2)+sakura(wx+70,160,1)}`;
+    s+=`<rect x="40" y="240" width="320" height="110" fill="#3f7a5f" stroke="#a87650" stroke-width="8" rx="4"/><text x="200" y="300" text-anchor="middle" font-size="20" fill="#fff" opacity=".85" font-family="sans-serif">하트는 소중히 ♡</text>`;
+    s+=`<rect y="420" width="400" height="180" fill="#e2b48a"/><path d="M0,450 H400 M0,490 H400 M0,540 H400" stroke="#cf9c70" stroke-width="2"/>`;
+    for(const dx of [10,150,290]) s+=`<rect x="${dx}" y="470" width="100" height="20" fill="#f3cc9e" stroke="#b58050" stroke-width="2"/><rect x="${dx+10}" y="490" width="8" height="60" fill="#9c9cae"/><rect x="${dx+82}" y="490" width="8" height="60" fill="#9c9cae"/>`;
+  }else if(type==='road'){
+    s+=`<rect width="400" height="600" fill="url(#${g}s)"/>`;
+    if(night) s+=stars(40,300,7)+crescent(320,90,30,'#2a1248');
+    else s+=`<circle cx="${slot===1?300:80}" cy="${slot===1?240:90}" r="40" fill="${slot===1?'#ff8a6b':'#fffbe0'}" opacity=".85"/><ellipse cx="120" cy="120" rx="50" ry="16" fill="#fff" opacity=".8"/>`;
+    s+=`<path d="M0,300 L30,300 L30,250 L70,220 L110,250 L110,300 L150,300 L150,260 L200,260 L200,300 L260,300 L260,240 L300,210 L340,240 L340,300 L400,300 V600 H0Z" fill="${night?'#3b2060':'#f0c8e0'}"/>`;
+    if(night) for(const [x,y] of [[50,265],[170,280],[290,260]]) s+=`<rect x="${x}" y="${y}" width="12" height="12" fill="#ffe7a0"/>`;
+    s+=`<path d="M0,330 H400 V600 H0Z" fill="${night?'#4a2a70':'#ffe0ee'}"/><path d="M150,330 L250,330 L400,600 L0,600Z" fill="${night?'#6a4a8a':'#fff4f8'}"/>`;
+    for(const [tx,ts] of [[40,1],[360,1.15]]) s+=`<rect x="${tx-8}" y="300" width="16" height="${120*ts}" fill="#8a5a4a"/><circle cx="${tx}" cy="290" r="${60*ts}" fill="${night?'#b98ac8':'#ffc9df'}"/><circle cx="${tx-30}" cy="320" r="${36*ts}" fill="${night?'#a37ab8':'#ffb3d1'}"/><circle cx="${tx+30}" cy="250" r="${40*ts}" fill="${night?'#c99ad8':'#ffd8e8'}"/>`;
+    s+=`<rect x="300" y="380" width="6" height="110" fill="#8a7a9a"/><circle cx="303" cy="378" r="12" fill="${night?'#fff3a0':'#fff'}"/>`;
+  }else if(type==='room'){ /* 쇼콜라의 방 — 핑크 고딕 드레스룸 */
+    s+=`<rect width="400" height="600" fill="#5a2050"/>`;
+    for(let x=0;x<400;x+=28) for(let y=0;y<420;y+=28) s+=`<path d="M${x+14},${y} L${x+28},${y+14} L${x+14},${y+28} L${x},${y+14}Z" fill="${(x/28+y/28)%2?'#6a2a5e':'#5a2050'}"/>`;
+    s+=`<path d="M0,0 Q60,160 30,420 L0,420Z M400,0 Q340,160 370,420 L400,420Z" fill="#c8407a"/><path d="M0,0 Q40,120 20,420 M400,0 Q360,120 380,420" stroke="#ff8fbf" stroke-width="3" fill="none"/>`;
+    s+=`<path d="M0,0 Q100,50 200,10 Q300,50 400,0 L400,30 Q300,80 200,40 Q100,80 0,30Z" fill="#ff7fb6"/>`;
+    s+=`<rect x="120" y="90" width="160" height="200" rx="80" fill="#a8b8e8" stroke="${P.gold}" stroke-width="8"/>`+(night?crescent(220,160,22,'#a8b8e8'):`<ellipse cx="180" cy="150" rx="30" ry="50" fill="#fff" opacity=".35"/>`);
+    for(const [cx,cy] of [[90,250],[310,250],[70,150],[330,150]]) s+=`<rect x="${cx-4}" y="${cy}" width="8" height="26" fill="#fff6e0"/><ellipse cx="${cx}" cy="${cy-6}" rx="4" ry="8" fill="#ffd27a"/><circle cx="${cx}" cy="${cy-4}" r="22" fill="url(#${g}c)"/>`;
+    s+=`<rect y="420" width="400" height="180" fill="#7a2c6e"/><ellipse cx="200" cy="510" rx="190" ry="60" fill="#c8407a" opacity=".8"/><ellipse cx="200" cy="510" rx="150" ry="44" fill="none" stroke="${P.gold}" stroke-width="3" stroke-dasharray="6 6"/>`;
+    s+=`<path d="M250,400 Q250,360 290,360 L370,360 Q400,360 400,400 L400,460 L250,460Z" fill="#ff8fbf" stroke="#c8407a" stroke-width="4"/><ellipse cx="330" cy="420" rx="22" ry="16" fill="#3a1a50"/><path d="M316,410 l-4,-12 l10,6Z M344,410 l4,-12 l-10,6Z" fill="#3a1a50"/>`;
+  }else{ /* makai — 마계 / 달의 문 */
+    s+=`<rect width="400" height="600" fill="url(#${g}s)"/>`;
+    if(!night) s+=`<rect width="400" height="600" fill="#2a0f4a" opacity=".6"/>`;
+    s+=stars(70,420,3)+crescent(200,150,64,night?'#2a1450':'#2b1352');
+    s+=`<path d="M0,430 L40,430 L40,330 L60,300 L80,330 L80,380 L120,380 L120,300 L150,250 L180,300 L180,360 L220,360 L220,280 L250,230 L280,280 L280,380 L320,380 L320,320 L340,290 L360,320 L360,430 L400,430 V600 H0Z" fill="#1c0a2e"/>`;
+    for(const [x,y] of [[56,350],[140,320],[236,300],[336,340]]) s+=`<rect x="${x}" y="${y}" width="8" height="12" rx="4" fill="#ffd6f0"/>`;
+    s+=`<path d="M0,480 Q100,450 200,470 Q300,490 400,460 V600 H0Z" fill="#3a1450"/>`;
+    for(let i=0;i<14;i++){ const x=20+i*28, y=500+Math.sin(i)*12; s+=`<path d="${heartD(x,y,6)}" fill="${['#ff8fbf','#d9c8ff','#ffb36b','#7fe0b5'][i%4]}" opacity=".85"/>`; }
+  }
+  return s;
+}
+function drawTitleSky(){
+  return `<defs><linearGradient id="ts" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14062e"/><stop offset=".6" stop-color="#3e1660"/><stop offset="1" stop-color="#7a2c6e"/></linearGradient></defs>
+    <rect width="400" height="700" fill="url(#ts)"/>${stars(90,500,11)}${crescent(300,110,46,'#1c0a38')}
+    <path d="M0,560 Q60,520 120,550 Q180,500 250,545 Q320,510 400,540 V700 H0Z" fill="#5a2a7a" opacity=".8"/>
+    <path d="M0,610 Q80,570 160,600 Q240,560 320,600 Q360,580 400,590 V700 H0Z" fill="#7a3a8a" opacity=".9"/>`;
+}
+function drawMirrorRoom(){
+  return `<rect width="200" height="300" fill="#5a2050"/>
+    <path d="M0,0 Q30,100 14,300 L0,300Z M200,0 Q170,100 186,300 L200,300Z" fill="#c8407a"/>
+    <rect x="16" y="70" width="44" height="120" rx="22" fill="#a8b8e8" stroke="${P.gold}" stroke-width="4"/>
+    <rect x="12" y="186" width="54" height="40" fill="#8a3a6a" stroke="${P.gold}" stroke-width="2"/>
+    ${[[150,70],[170,90]].map(([x,y])=>`<rect x="${x}" y="${y}" width="4" height="14" fill="#fff6e0"/><ellipse cx="${x+2}" cy="${y-4}" rx="2.5" ry="5" fill="#ffd27a"/>`).join('')}
+    <path d="M120,60 L190,60" stroke="${P.gold}" stroke-width="3"/>${[128,142,156,170,182].map((x,i)=>`<path d="M${x},60 L${x-6},120 L${x+8},120Z" fill="${['#ff8fbf','#2a1428','#ffb3d1','#6a3a8a','#ff7fb6'][i]}"/>`).join('')}
+    <ellipse cx="100" cy="280" rx="96" ry="22" fill="#c8407a"/><ellipse cx="100" cy="280" rx="74" ry="14" fill="none" stroke="${P.gold}" stroke-width="2" stroke-dasharray="4 4"/>
+    <path d="M150,230 Q150,214 168,214 L196,214 L200,260 L150,260Z" fill="#ff8fbf"/><circle cx="178" cy="234" r="9" fill="#3a1a50"/>`;
+}
+</script>
+<script>
+/* =========================================================
+   3. 사운드 — Web Audio API 오리지널 작곡
+   ========================================================= */
+const Snd = (() => {
+  let ctx=null, master=null, musicBus=null, sfxBus=null, muted=false;
+  let theme=null, nextTime=0, step=0, timer=null;
+  const mtof = m => 440*Math.pow(2,(m-69)/12);
+
+  function init(){
+    if(ctx) { if(ctx.state==='suspended') ctx.resume(); return; }
+    try{
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      master = ctx.createGain(); master.gain.value = muted?0:.8; master.connect(ctx.destination);
+      musicBus = ctx.createGain(); musicBus.gain.value=.38; musicBus.connect(master);
+      sfxBus = ctx.createGain(); sfxBus.gain.value=.6; sfxBus.connect(master);
+      /* 간단한 리버브 느낌의 딜레이 */
+      const d = ctx.createDelay(); d.delayTime.value=.27; const fb=ctx.createGain(); fb.gain.value=.28;
+      const wet=ctx.createGain(); wet.gain.value=.25; musicBus.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(master);
+    }catch(e){ ctx=null; }
+  }
+
+  /* --- 악기 --- */
+  function musicBox(m,t,dur,vol=.22,bus=musicBus){
+    const f=mtof(m), g=ctx.createGain();
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.006); g.gain.exponentialRampToValueAtTime(.001,t+Math.max(.6,dur*1.6));
+    g.connect(bus);
+    [[f,'triangle',1],[f*2,'sine',.35],[f*4.02,'sine',.12]].forEach(([fr,ty,v])=>{
+      const o=ctx.createOscillator(), og=ctx.createGain(); o.type=ty; o.frequency.value=fr; og.gain.value=v;
+      o.connect(og); og.connect(g); o.start(t); o.stop(t+Math.max(.7,dur*1.7));
+    });
+  }
+  function bell(m,t,vol=.16,bus=musicBus){
+    const f=mtof(m), g=ctx.createGain();
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.001,t+3.2);
+    g.connect(bus);
+    [[1,1],[2.76,.32],[5.4,.1],[0.5,.2]].forEach(([r,v])=>{
+      const o=ctx.createOscillator(), og=ctx.createGain(); o.type='sine'; o.frequency.value=f*r; og.gain.value=v;
+      o.connect(og); og.connect(g); o.start(t); o.stop(t+3.3);
+    });
+  }
+  function pad(ms,t,dur,vol=.05){
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=900; lp.Q.value=.5;
+    const g=ctx.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+1.4);
+    g.gain.setValueAtTime(vol,t+dur-.6); g.gain.linearRampToValueAtTime(0,t+dur+.8);
+    lp.connect(g); g.connect(musicBus);
+    ms.forEach(m=>[-7,7].forEach(cent=>{
+      const o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.value=mtof(m); o.detune.value=cent;
+      o.connect(lp); o.start(t); o.stop(t+dur+1);
+    }));
+  }
+
+  /* --- 낮 테마: F장조 왈츠 오르골 (3/4, 16마디) --- */
+  const CH = {F:[53,57,60],C:[52,55,60],Dm:[50,53,57],Bb:[50,53,58],Am:[52,57,60]};
+  const BASS = {F:41,C:48,Dm:50,Bb:46,Am:45};
+  const DAY_CH = ['F','C','Dm','Bb','F','C','C','F','Dm','Am','Bb','C','F','Bb','C','F'];
+  const DAY_MEL = [
+    [[81,1],[84,1],[81,1]], [[79,1],[76,1],[79,1]], [[77,1.5],[81,.5],[86,1]], [[84,2],[82,1]],
+    [[81,.5],[82,.5],[84,1],[89,1]], [[88,1],[86,1],[84,1]], [[86,1],[82,1],[79,1]], [[77,3]],
+    [[86,.5],[84,.5],[81,1],[77,1]], [[76,1],[81,1],[84,1]], [[86,1.5],[84,.5],[82,1]], [[81,1],[79,1],[76,1]],
+    [[77,.5],[81,.5],[84,1],[81,1]], [[86,1],[89,1],[86,1]], [[84,1],[88,1],[91,1]], [[89,2],[0,1]]
+  ];
+  function dayBar(bar,t,beat){
+    const ch=DAY_CH[bar%16];
+    musicBox(BASS[ch]+12,t,beat,.13);
+    musicBox(CH[ch][0]+12,t+beat,beat*.5,.07); musicBox(CH[ch][1]+12,t+beat,beat*.5,.07);
+    musicBox(CH[ch][1]+12,t+beat*2,beat*.5,.07); musicBox(CH[ch][2]+12,t+beat*2,beat*.5,.07);
+    let o=0; DAY_MEL[bar%16].forEach(([m,d])=>{ if(m) musicBox(m,t+o*beat,d*beat,.17); o+=d; });
+    return beat*3;
+  }
+  /* --- 밤 테마: 몽환적인 벨 + 패드 (4/4) --- */
+  const NIGHT = [[53,57,60,64],[52,55,59,62],[50,53,57,60],[48,52,55,59],[46,50,53,57],[45,48,52,55],[43,48,50,55],[48,52,55,60]];
+  const ARP = [[3,0],[1.5,2],[2.5,1],[3.5,3]];
+  function nightBar(bar,t,beat){
+    const ch=NIGHT[bar%8];
+    pad(ch,t,beat*4,.035);
+    bell(ch[0]-12,t,.09);
+    ARP.forEach(([b,i],k)=>{ if(bar%2 && k===3) return; bell(ch[i]+24,t+b*beat,.07+(k===0?.03:0)); });
+    if(bar%4===3) bell(ch[3]+36,t+beat*3.5,.05);
+    return beat*4;
+  }
+  const THEMES = { day:{fn:dayBar,beat:60/138}, night:{fn:nightBar,beat:60/58} };
+
+  function tick(){
+    if(!ctx || !theme) return;
+    while(nextTime < ctx.currentTime + .3){
+      const th=THEMES[theme]; nextTime += th.fn(step++, nextTime, th.beat);
+    }
+  }
+  function play(name){
+    if(theme===name && timer) return;
+    theme=name; if(!ctx) return;
+    step=0; nextTime=ctx.currentTime+.15;
+    if(!timer) timer=setInterval(tick,60);
+  }
+  function stop(){ theme=null; }
+
+  /* --- 효과음 --- */
+  function sfx(type){
+    if(!ctx || muted) return;
+    const t=ctx.currentTime+.01;
+    if(type==='click'){ musicBox(96,t,.08,.12,sfxBus); }
+    else if(type==='shard'){ [84,88,91,96,100].forEach((m,i)=>bell(m,t+i*.06,.12,sfxBus)); }
+    else if(type==='sad'){ [72,68,63].forEach((m,i)=>bell(m,t+i*.16,.1,sfxBus)); }
+    else if(type==='level'){ [72,76,79,84].forEach((m,i)=>musicBox(m,t+i*.08,.2,.2,sfxBus)); musicBox(88,t+.34,.6,.22,sfxBus); }
+    else if(type==='fanfare'){
+      const seq=[[72,0,.2],[72,.18,.2],[72,.36,.2],[77,.56,.6],[76,1.1,.2],[77,1.3,.2],[81,1.5,1.4]];
+      seq.forEach(([m,o,d])=>{ musicBox(m,t+o,d,.22,sfxBus); musicBox(m-12,t+o,d,.12,sfxBus); });
+      [[53,57,60,65]].forEach(c=>c.forEach(m=>bell(m+12,t+1.5,.08,sfxBus)));
+      [89,93,96,101].forEach((m,i)=>bell(m,t+1.6+i*.1,.07,sfxBus));
+    }
+  }
+  function toggleMute(){
+    muted=!muted; if(master) master.gain.setTargetAtTime(muted?0:.8, ctx.currentTime, .05);
+    return muted;
+  }
+  return {init, play, stop, sfx, toggleMute, get muted(){return muted;}, set mutedInit(v){muted=v;}};
+})();
+</script>
+<script>
+/* =========================================================
+   5. 상태 / UI / 대사 엔진 / 연출
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+const SAVE_KEY = 'sugarRuneHeart_save_v1';
+const MUTE_KEY = 'sugarRuneHeart_mute';
+document.head.insertAdjacentHTML('beforeend','<style>.charwrap.petw{flex:0 1 22%;height:30%}</style>');
+
+let G = null;
+function newState(){
+  const aff={}; BOY_IDS.forEach(k=>aff[k]=0);
+  const hearts={}; HEART_ORDER.forEach(k=>hearts[k]=0);
+  return {day:1, slot:0, charm:12, intel:12, magic:14, hp:80, ecru:1000, score:0, hearts, aff,
+    trust:0, bond:0, vanilla:0, forced:false, seenEv:[], story:{},
+    owned:Object.values(DEFAULT_LOOK).concat(['noRibbon','noDress','noNeck','noEar','noHat']), look:Object.assign({},DEFAULT_LOOK)};
+}
+function outfit(){
+  const ids=Object.values(G.look), themes={};
+  let b=ids.reduce((s,id)=>s+(ITEM[id]?ITEM[id].charm:0),0);
+  if(G.look.dress!=='noDress') b-= (ITEM[G.look.top].charm + ITEM[G.look.bottom].charm);
+  ids.forEach(id=>{ const t=ITEM[id]&&ITEM[id].theme; if(t) themes[t]=(themes[t]||0)+1; });
+  let set=null; if((themes.pink||0)>=5) set='러블리 핑크 코디'; if((themes.goth||0)>=5) set='고스로리 코디';
+  if(set) b+=8;
+  return {bonus:b, set};
+}
+function effCharm(){ return G.charm + outfit().bonus; }
+function tier(a){ return a>=85?3:a>=55?2:a>=25?1:0; }
+function hearts(a){ const n=Math.min(5,Math.floor(a/20)); return '♥'.repeat(n)+'♡'.repeat(5-n); }
+const fmt = n => n.toLocaleString('ko-KR');
+
+/* ---------- HUD ---------- */
+function renderHUD(){
+  $('hDay').textContent=G.day+'일째'; $('hSlot').textContent=SLOTS[G.slot];
+  const ob=outfit().bonus;
+  $('stats').innerHTML=STATS.map(s=>`<div class="stat"><div class="lbl"><span>${s.n}</span><b>${G[s.k]}${s.k==='charm'&&ob?` <small style="color:#e0457f">+${ob}</small>`:''}</b></div><div class="bar"><i style="width:${Math.min(100,G[s.k])}%;background:${s.c}"></i></div></div>`).join('');
+  const me=Math.max(0,G.score), mx=Math.max(me,G.vanilla,3000)*1.1;
+  $('vsMe').style.width=(me/mx*100)+'%'; $('vsMeN').textContent=fmt(G.score)+' 에클';
+  $('vsRi').style.width=(G.vanilla/mx*100)+'%'; $('vsRiN').textContent=fmt(G.vanilla)+' 에클';
+  const n=HEART_ORDER.reduce((s,k)=>s+G.hearts[k],0);
+  $('caseSvg').innerHTML=drawCase(n); $('caseCount').textContent='하트 '+n+'개';
+}
+function toast(msg){ const d=document.createElement('div'); d.className='toast'; d.innerHTML=msg; $('toasts').appendChild(d); setTimeout(()=>d.remove(),2000); }
+
+/* ---------- 배경 / 캐스트 ---------- */
+let curBG='', cast=[], fxMode='petal';
+function setBG(type, slot=G?G.slot:0){
+  const key=type+slot; if(key===curBG) return; curBG=key;
+  const bg=$('bg'); bg.style.opacity=0;
+  setTimeout(()=>{ bg.innerHTML=drawBG(type,slot); bg.style.opacity=1; },220);
+  const night = slot===2 || type==='makai';
+  Snd.play(night?'night':'day'); fxMode = night?'star':'petal';
+}
+function charSVG(c){ return drawPerson(c.id, c.face, 'upper', c.id==='chocolat'?G.look:null); }
+function setCast(list){
+  cast=list.map(o=>({id:o.id, face:o.face||'normal'}));
+  const box=$('chars'); box.innerHTML='';
+  cast.forEach(c=>{ const w=document.createElement('div'); w.className='charwrap'+(PEOPLE[c.id]&&PEOPLE[c.id].pet?' petw':''); w.dataset.id=c.id; w.innerHTML=charSVG(c); box.appendChild(w); });
+}
+function setFace(id, face){
+  const c=cast.find(x=>x.id===id); if(!c) return;
+  const w=[...$('chars').children].find(x=>x.dataset.id===id);
+  if(c.face!==face){ c.face=face; if(w) w.innerHTML=charSVG(c); }
+  if(w && face==='smile'){ w.classList.remove('bounce'); void w.offsetWidth; w.classList.add('bounce'); }
+}
+function focusChar(id){ [...$('chars').children].forEach(w=>w.classList.toggle('dim', cast.length>1 && id && w.dataset.id!==id)); }
+function effects({tone=false, speed=false, barrier=false}={}){
+  $('tone').classList.toggle('on',tone); $('speed').classList.toggle('on',speed); $('barrier').classList.toggle('on',barrier);
+}
+function flash(){ const f=document.createElement('div'); f.className='flash'; $('app').appendChild(f); setTimeout(()=>f.remove(),650); }
+
+/* ---------- 파티클 ---------- */
+setInterval(()=>{
+  const fx=$('fx'); if(!fx || fx.children.length>18 || document.hidden) return;
+  const p=document.createElement('div'); p.className='petal';
+  p.style.left=Math.random()*100+'%'; p.style.setProperty('--dx',(Math.random()*160-80)+'px');
+  p.style.animationDuration=(6+Math.random()*5)+'s';
+  p.innerHTML = fxMode==='star'
+    ? `<svg width="12" height="12" viewBox="0 0 20 20"><path d="${starPath(10,10,9,3,4,0)}" fill="#fff6c8"/></svg>`
+    : (Math.random()<.5 ? `<svg width="14" height="14" viewBox="-10 -16 24 24">${sakura(0,0,1)}</svg>` : `<svg width="12" height="12" viewBox="-12 -12 24 24"><path d="${heartD(0,-3,9)}" fill="#ffb3d1"/></svg>`);
+  fx.appendChild(p); setTimeout(()=>p.remove(),11500);
+},700);
+function burst(x,y,n=10){
+  for(let i=0;i<n;i++){ const s=document.createElement('div'); s.className='sparkle'; s.textContent=pick(['✦','✧','♥','♡']);
+    s.style.left=x+'px'; s.style.top=y+'px'; s.style.fontSize=rnd(12,22)+'px';
+    s.style.setProperty('--dx',rnd(-70,70)+'px'); s.style.setProperty('--dy',rnd(-70,50)+'px');
+    $('app').appendChild(s); setTimeout(()=>s.remove(),850); }
+}
+
+/* ---------- 하트 획득 연출: 가슴에서 튀어나와 보석함으로 ---------- */
+async function gainHeart(type, fromId){
+  const h=HEARTS[type];
+  G.hearts[type]++;
+  if(type==='noir'){ G.score+=h.ecru; G.hp=Math.max(0,G.hp-15); }
+  else { G.score+=h.ecru; G.ecru+=h.ecru; }
+  const app=$('app').getBoundingClientRect(), cs=$('case').getBoundingClientRect();
+  let sx=app.width/2-20, sy=app.height*.45;
+  const w=fromId && [...$('chars').children].find(x=>x.dataset.id===fromId);
+  if(w){ const r=w.getBoundingClientRect(); sx=r.left-app.left+r.width/2-20; sy=r.top-app.top+r.height*.62; }
+  const el=document.createElement('div'); el.className='flyheart'; el.innerHTML=drawHeart(type,40);
+  el.style.left=sx+'px'; el.style.top=sy+'px'; el.style.transform='scale(0)'; el.style.transition='transform .4s cubic-bezier(.3,1.8,.5,1), top .4s';
+  $('app').appendChild(el); burst(sx+20,sy+20,14);
+  Snd.sfx(type==='noir'?'sad':'shard');
+  await wait(30); el.style.transform='scale(2)'; el.style.top=(sy-60)+'px';
+  await wait(800);
+  el.style.transition='left .7s cubic-bezier(.5,0,.6,1), top .7s cubic-bezier(.4,-.4,.6,1), transform .7s';
+  el.style.left=(cs.left-app.left+cs.width/2-20)+'px'; el.style.top=(cs.top-app.top+cs.height*.4-20)+'px'; el.style.transform='scale(.5) rotate(360deg)';
+  await wait(720);
+  el.remove(); burst(cs.left-app.left+cs.width/2, cs.top-app.top+cs.height/2, 6);
+  $('case').animate([{transform:'scale(1)'},{transform:'scale(1.2) rotate(-6deg)'},{transform:'scale(1)'}],{duration:350});
+  toast(`${drawHeart(type,18)} <b>${h.name} 하트</b> ${type==='noir'?'…검은 하트가 섞였다! ('+fmt(h.ecru)+' 에클)':'+'+fmt(h.ecru)+' 에클'}`);
+  renderHUD();
+}
+
+/* ---------- 스탯 ---------- */
+const STAT_NAME={charm:'매력',intel:'지력',magic:'마력',hp:'체력'};
+function addStat(k,v){
+  if(!v) return; const b=G[k]; G[k]=Math.max(0,Math.min(100,G[k]+v)); const d=G[k]-b; if(!d) return;
+  toast(`${STAT_NAME[k]} ${d>0?'▲ +'+d:'▼ '+d}`);
+  if(k!=='hp' && Math.floor(b/20)<Math.floor(G[k]/20)){ Snd.sfx('level'); setTimeout(()=>toast(`🎀 <b>${STAT_NAME[k]} 랭크 업!</b> Lv.${Math.floor(G[k]/20)+1}`),300); }
+}
+async function applyEff(e={}){
+  ['charm','intel','magic','hp'].forEach(k=>addStat(k,e[k]));
+  if(e.ecru){ G.ecru=Math.max(0,G.ecru+e.ecru); toast(`💰 용돈 ${e.ecru>0?'+':''}${fmt(e.ecru)} 에클`); }
+  if(e.bond){ G.bond=Math.min(100,G.bond+e.bond); toast(`바닐라와의 우정 ♣ +${e.bond}`); }
+  if(e.pierre){ G.aff.pierre=Math.min(100,G.aff.pierre+e.pierre); toast(`피에르 ❄ +${e.pierre}`); }
+  if(e.trust){ G.trust+=e.trust; }
+  renderHUD();
+  if(e.heart){ await wait(250); await gainHeart(e.heart, e.from); }
+}
+
+/* ---------- 대사 엔진 ---------- */
+let advance=null, typing=false, skipType=false;
+function nameOf(who){ if(who==='narr') return ''; if(PEOPLE[who]) return PEOPLE[who].name; if(BOYS[who]) return BOYS[who].name; return who; }
+async function say(who, text, opt={}){
+  const dlg=$('dlg'), b=$('bubble');
+  $('menu').classList.remove('show'); dlg.classList.add('show');
+  b.className='bubble '+(opt.style||(who==='narr'?'narr':'tail'));
+  const idx=cast.findIndex(c=>c.id===who);
+  if(idx>=0) b.style.setProperty('--tail', cast.length>1 ? (15+idx*70/(cast.length-1))+'%' : '50%');
+  $('dlgName').style.display = who==='narr'?'none':'block'; $('dlgName').textContent=nameOf(who);
+  if(opt.face) setFace(who,opt.face);
+  focusChar(idx>=0?who:null); effects(opt); if(opt.flash) flash();
+  $('choices').innerHTML=''; $('dlgNext').style.display='none';
+  const t=$('dlgText'); t.textContent=''; typing=true; skipType=false;
+  for(let i=0;i<text.length;i++){ if(skipType){ t.textContent=text; break; } t.textContent+=text[i]; await wait(text[i]==='\n'?110:22); }
+  typing=false; $('dlgNext').style.display='block';
+  await new Promise(r=>advance=r); advance=null;
+}
+function choose(opts){
+  return new Promise(res=>{
+    $('dlg').classList.add('show'); $('dlgNext').style.display='none';
+    const box=$('choices'); box.innerHTML='';
+    opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='choice'; b.textContent='♥ '+o;
+      b.onclick=ev=>{ ev.stopPropagation(); Snd.sfx('click'); box.innerHTML=''; res(i); }; box.appendChild(b); });
+  });
+}
+function hideDlg(){ $('dlg').classList.remove('show'); effects(); }
+function onAdvance(){ if(typing){ skipType=true; return; } if(advance){ Snd.sfx('click'); advance(); } }
+$('dlg').addEventListener('click', onAdvance);
+document.addEventListener('keydown', e=>{ if((e.key===' '||e.key==='Enter') && $('dlg').classList.contains('show')){ e.preventDefault(); onAdvance(); } });
+
+/* ---------- 세이브 / 로드 ---------- */
+let canSave=false;
+function saveGame(silent){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(G)); if(!silent) toast('💾 저장했어요!'); return true; }
+  catch(e){ if(!silent) toast('저장할 수 없어요 (저장소 사용 불가)'); return false; }
+}
+function loadData(){ try{ const s=localStorage.getItem(SAVE_KEY); if(!s) return null; const d=JSON.parse(s); return d&&d.day?d:null; }catch(e){ return null; } }
+</script>
+<script>
+/* =========================================================
+   6. 게임 진행
+   ========================================================= */
+const SLOT_BG=['classroom','road','room'];
+let menuResolve=null;
+const nm = (s,n) => s.replace(/\{n\}/g,n);
+
+function showMenu(){
+  return new Promise(res=>{
+    hideDlg(); focusChar(null); canSave=true; menuResolve=res;
+    $('menuTitle').textContent=`♥ ${G.day}일째 ${SLOTS[G.slot]} — 무엇을 할까? ♥`;
+    $('acts').innerHTML='';
+    ACTIONS.forEach(a=>{
+      const b=document.createElement('button'); b.className='act';
+      b.innerHTML=`<span class="ico">${a.ico}</span>${a.name}<small>${a.id==='heart'&&G.slot===2?'밤엔 불가':a.hint}</small>`;
+      if(a.id==='magic' && G.hp<10) b.disabled=true;
+      if(a.id==='heart' && G.slot===2) b.disabled=true;
+      b.onclick=()=>{ Snd.sfx('click'); if(a.id==='heart'){ $('npcPick').classList.toggle('show'); return; } finish({act:a.id}); };
+      $('acts').appendChild(b);
+    });
+    const np=$('npcPick'); np.classList.remove('show'); np.innerHTML='';
+    BOY_IDS.forEach(id=>{
+      const n=BOYS[id], b=document.createElement('button'); b.className='npcbtn';
+      b.innerHTML=`${n.name}<span class="hearts">${hearts(G.aff[id])}</span>`; b.title=n.desc;
+      if(id==='pierre' && !G.story.metP) b.disabled=true;
+      b.onclick=()=>{ Snd.sfx('click'); finish({act:'heart', boy:id}); };
+      np.appendChild(b);
+    });
+    $('menu').classList.add('show');
+    function finish(r){ canSave=false; menuResolve=null; $('menu').classList.remove('show'); res(r); }
+  });
+}
+
+/* ---------- 하트 모으기 ---------- */
+async function casting(boy){
+  await say('chocolat','아그랑디스망!!', {style:'shout', face:'smile', barrier:true, speed:true, flash:true});
+  const ok = Math.random() < Math.min(.95, .55 + G.magic/200);
+  if(!ok){ setFace('chocolat','panic'); await say('narr','결계가 흔들리더니 하트가 다시 가슴 속으로 쏙 들어가 버렸다…! (마력 부족)',{}); return false; }
+  await say('narr',`결계 속, ${BOYS[boy].name}의 가슴에서 하트 결정이 떠오른다…!`,{barrier:true, tone:true});
+  return true;
+}
+function heartColor(boy, type){
+  if(type==='friend') return 'green';
+  if(type==='clumsy') return Math.random()<(G.day>10?.18:.08) ? 'noir' : 'pis';
+  const v = G.aff[boy] + effCharm()/2 + (G[BOYS[boy].likes]>=40?10:0);
+  if(v>=128 && G.magic>=50) return 'crimson';
+  if(v>=96) return 'violet';
+  if(v>=58) return 'pink';
+  return 'orange';
+}
+async function doHeart(boy){
+  if(boy==='pierre') return doPierre();
+  const B=BOYS[boy];
+  setBG(SLOT_BG[G.slot]); setCast([{id:'chocolat'},{id:boy}]);
+  const sit=pick(SITUATIONS);
+  await say('narr',`💗 「${sit.title}」`,{tone:true});
+  await say('narr', nm(sit.intro,B.name));
+  const order=[0,1,2].sort(()=>Math.random()-.5);
+  const i=order[await choose(order.map(k=>nm(sit.ch[k].l,B.name)))];
+  const c=sit.ch[i];
+  setFace(boy, c.type==='clumsy'?'panic':'smile'); setFace('chocolat', c.type==='clumsy'?'panic':'smile');
+  await say('narr', nm(c.t,B.name), {tone:c.type==='romance'});
+  const gain = c.type==='romance' ? 15 + (G[B.likes]>=40?6:0) : c.type==='friend' ? 9 : -3;
+  G.aff[boy]=Math.max(0,Math.min(100,G.aff[boy]+gain));
+  toast(`${B.name} 마음 ${gain>0?'♥ +'+gain:'💦 '+gain}`);
+  if(c.type==='clumsy' && Math.random()<.4){ await say('chocolat','(으… 또 성질부렸다…)',{style:'thought'}); addStat('charm',1); return; }
+  const col=heartColor(boy, c.type);
+  if(c.type!=='clumsy'){
+    setCast([{id:'chocolat'},{id:boy},{id:'duke'}]);
+    await say('duke', `${B.name}의 하트가 보인다. 지금 꺼내면… ${HEARTS[col].name} 하트(${fmt(HEARTS[col].ecru)} 에클) 정도겠군.`, {});
+    const k=await choose(['「아그랑디스망!」 지금 하트를 꺼낸다', '아직이야… 마음이 더 자랄 때까지 기다린다']);
+    if(k===1){ await say('chocolat','(조금만 더… 더 반짝이는 하트가 될 때까지!)',{style:'thought', face:'smile'}); addStat('charm',1); return; }
+  } else await say('chocolat','(지, 지금이다! 놀란 틈에!)', {style:'thought', face:'smile'});
+  if(!await casting(boy)) return;
+  await applyEff({heart:col, from:boy});
+  if(col==='noir'){ setFace(boy,'panic'); await say('duke','쇼콜라! 그건 노아르야! 질투의 어둠이 묻어 있다고! 함부로 다루지 마!',{face:'panic'}); }
+  else if(col!=='pis'){
+    G.aff[boy]=Math.floor(G.aff[boy]/2);
+    await say('narr',`하트를 빼앗긴 ${B.name}은(는) 방금 그 두근거림을 잊은 듯 멍하니 서 있다…`,{});
+    if(col==='crimson'||col==='violet') await say('chocolat','이렇게 깊은 마음이었구나… 소중히 간직할게.',{face:'normal', tone:true});
+  }
+  addStat('charm', 1);
+}
+async function doPierre(){
+  setBG(SLOT_BG[G.slot]); setCast([{id:'chocolat'},{id:'pierre'}]);
+  const lines = G.aff.pierre<30 ? ['…또 너야? 귀찮게.','팬클럽이 보면 시끄러워질 텐데.'] : G.aff.pierre<60 ? ['너는 이상하게 내 앞에서 겁을 안 먹네.','…펜싱 시합, 보러 올 거면 와도 돼.'] : ['쇼콜라. 너랑 있으면 가슴이 이상하게 아파.','내 하트는… 차가운 색일지도 몰라.'];
+  await say('pierre', pick(lines), {face: G.aff.pierre>=60?'smile':'normal', tone:G.aff.pierre>=60});
+  const i=await choose(['"피에르는 왜 늘 혼자인 것 같아?"','"흥, 잘난 척은!" 맞받아친다','몰래 하트를 노려본다']);
+  if(i===0){ await say('pierre','…그런 질문, 처음 받아 봐.',{face:'panic'}); await applyEff({pierre:10, trust:1}); }
+  else if(i===1){ await say('pierre','큭… 역시 재밌는 애야.',{face:'smile'}); await applyEff({pierre:7}); }
+  else {
+    if(!await casting('pierre')) return;
+    await say('narr','피에르의 가슴에서 떠오른 것은… 새카만 하트!',{speed:true, flash:true});
+    await applyEff({heart:'noir', from:'pierre', pierre:3});
+    await say('duke','저 녀석, 노아르를 품고 있잖아…! 조심해, 쇼콜라!',{face:'panic'});
+  }
+}
+
+/* ---------- 기타 행동 ---------- */
+async function doStudy(){
+  setBG('classroom'); setCast([{id:'chocolat'}]);
+  if(G.slot===2){ await say('chocolat','(밤 복습… 졸려…)',{style:'thought', face:'panic'}); return applyEff({intel:rnd(4,6), hp:-6}); }
+  await say('narr',`오늘의 수업은 「${pick(['인간계 수학','국어','과학','역사'])}」.`);
+  if(Math.random()<.25){ await say('chocolat','으앗, 졸다가 들켰다…!',{face:'panic'}); return applyEff({intel:rnd(2,3), hp:-3}); }
+  await say('chocolat','오늘은 머리에 쏙쏙 들어와!',{face:'smile'}); return applyEff({intel:rnd(5,7), hp:-5});
+}
+async function doMagic(){
+  setBG(G.slot===2?'makai':'room'); setCast([{id:'chocolat'},{id:'duke'}]);
+  await say('duke', pick(['마법은 기합이 아니라 집중이다.','하트를 뽑으려면 결계부터 안정시켜.','오늘은 「브리에=에투알」 연습이다.']));
+  await say('chocolat', pick(['브리에=에투알!','플뢰르=스피랄!','에투알=에클레르!']), {style:'shout', face:'smile', speed:true});
+  const r=Math.random();
+  if(r<.2){ await say('narr','펑! 지팡이에서 초콜릿이 쏟아졌다… (쇼콜라=페트?!)'); setFace('chocolat','panic'); await say('duke','…그건 다른 주문이잖아.',{face:'panic'}); return applyEff({magic:rnd(2,3), hp:-15}); }
+  await say('narr','반짝이는 마력이 손끝까지 퍼져 나간다.',{tone:true}); return applyEff({magic:rnd(6,8), hp:-15});
+}
+async function doRest(forced){
+  setBG('room'); setCast([{id:'chocolat', face:forced?'panic':'normal'}]);
+  if(forced){ await say('chocolat','머리가 핑 돌아… 오늘은 무리야…',{face:'panic'}); await say('narr','체력이 바닥나 강제로 쉬었다.'); }
+  else await say('chocolat', pick(['푹신푹신~ 최고야.','핫초코 한 잔…','(꾸벅꾸벅…)']), {face:'smile'});
+  return applyEff({hp: forced?45:(G.slot===2?40:30)});
+}
+async function doWalk(){
+  let pool=EVENTS.filter(e=>!G.seenEv.slice(-6).includes(e.title));
+  if(G.slot!==2) pool=pool.filter(e=>!e.night);
+  if(!G.story.metP) pool=pool.filter(e=>e.who!=='pierre');
+  const ev=pick(pool); G.seenEv.push(ev.title);
+  setBG(ev.bg); setCast(ev.who?[{id:'chocolat'},{id:ev.who}]:[{id:'chocolat'}]);
+  await say('narr',`🌙 「${ev.title}」`,{tone:true});
+  const m = ev.who && ev.intro.match(new RegExp('^'+PEOPLE[ev.who].name+': "(.*)"$'));
+  await say(m?ev.who:'narr', m?m[1]:ev.intro);
+  const c=ev.ch[await choose(ev.ch.map(x=>x.l))];
+  if(ev.who) setFace(ev.who,'smile'); setFace('chocolat','smile');
+  await say('narr', c.t);
+  return applyEff(Object.assign({}, c.e, {hp:(c.e.hp||0)-4}));
+}
+
+/* ---------- 스토리 ---------- */
+async function stPrologue(){
+  setBG('makai',2); setCast([{id:'candy'}]);
+  await say('narr','마계의 궁전 「팔레」. 차기 여왕 후보 두 사람이 캔디 여왕 앞에 섰다.',{tone:true});
+  await say('candy','쇼콜라, 바닐라. 너희는 지금부터 인간계로 가서 인간의 「하트」를 모아 오너라.\n더 많은 에클의 하트를 모은 쪽이 다음 여왕이 된다.',{flash:true});
+  setCast([{id:'chocolat'},{id:'vanilla'}]);
+  await say('chocolat','맡겨 주세요! 하트 따위 잔뜩 모아 올게요!',{face:'smile', speed:true});
+  await say('vanilla','쇼, 쇼콜라… 나도 열심히 할게.',{face:'normal'});
+  setCast([{id:'chocolat'},{id:'robin'},{id:'duke'}]);
+  await say('robin','너희 담당 로비다. 인간계에선 록스타지. 하트 집계는 내가 한다.',{face:'smile'});
+  await say('duke','그리고 나는 사역마 듀크. 귀찮지만 따라가 주지.',{face:'normal'});
+  setBG('classroom',0); setCast([{id:'chocolat'},{id:'vanilla'}]);
+  await say('narr','— 달의 문을 지나, 인간계의 중학교. 둘은 사촌 사이로 전학 왔다.');
+  await say('chocolat','쇼콜라예요! 잘 부탁해!',{face:'smile'});
+  await say('narr','💡 하트 모으기: 남자아이를 골라 상황에서 선택 → 「아그랑디스망!」으로 하트를 꺼낸다.\n두근거림이 클수록 오렌지 → 핑크 → 바이올렛 → 진홍 하트!\n하트를 빼앗긴 상대는 그 감정을 잊어버린다. 마음이 충분히 자랐을 때 꺼내는 게 요령!');
+  await say('narr','💡 왼쪽 👗 옷장에서 에클로 옷을 사서 코디하면 매력 보너스! 같은 테마 5개면 세트 보너스.\n노아르(검은 하트)는 점수를 깎고 위험하다. 조심!');
+}
+async function stPierre(){
+  G.story.metP=1;
+  setBG('road'); setCast([{id:'chocolat'},{id:'pierre'}]);
+  await say('narr','하굣길. 여학생들의 비명 같은 환호성—「더 멤버즈」다.',{speed:true});
+  await say('pierre','…거기 전학생. 길 막지 말아 줄래?',{face:'normal'});
+  await say('chocolat','뭐, 뭐야 저 녀석!? (…그런데 왜 이렇게 눈을 못 떼겠지?)',{face:'panic', style:'thought'});
+  await say('duke','쇼콜라, 저 녀석… 하트가 안 보여. 이상해.',{});
+  await say('narr','💡 이제 「하트 모으기」에서 피에르를 고를 수 있다.');
+}
+async function stSofa(){
+  setBG('room',2); setCast([{id:'chocolat'},{id:'vanilla'}]);
+  await say('narr','밤. 분홍 소파에 바닐라와 나란히 앉았다.',{tone:true});
+  await say('vanilla','쇼콜라… 나 사실, 쇼콜라처럼 씩씩해지고 싶어.',{face:'normal'});
+  const i=await choose(['"바닐라는 바닐라라서 좋은 거야!"','"그럼 나랑 특훈하자!"','"…나는 바닐라처럼 인기 많고 싶은데."']);
+  if(i===0){ await say('vanilla','…고마워, 쇼콜라.',{face:'smile', tone:true}); await say('narr','(마녀의 하트는 평생 단 하나. 그래서 둘의 우정은 하트 대신 마음에 새겨진다.)',{tone:true}); await applyEff({bond:20, charm:3}); }
+  else if(i===1){ await say('vanilla','후훗, 응!',{face:'smile'}); await applyEff({bond:12, hp:-5, magic:3}); }
+  else { await say('vanilla','에…? 그, 그런가….',{face:'panic'}); await applyEff({bond:5, charm:2}); }
+}
+async function stNoir(){
+  setBG('road'); setCast([{id:'chocolat'},{id:'duke'}]);
+  await say('duke','쇼콜라. 요즘 피에르 주변에서 노아르 냄새가 진하게 난다.',{face:'panic', tone:true});
+  await say('narr','노아르—질투와 증오의 어둠으로 생기는 검은 하트. 마녀가 닿으면 영혼까지 좀먹는다고 한다.');
+  const i=await choose(['"그래도 피에르는 나쁜 애가 아닐 거야"','"…조심할게. 가까이 안 갈래"']);
+  if(i===0){ await say('duke','…바보. 네 마음대로 해.',{}); await applyEff({trust:1}); }
+  else { await say('duke','그래, 그게 현명해.',{face:'smile'}); await applyEff({intel:3}); }
+}
+async function stMid(){
+  setBG('room'); setCast([{id:'robin'},{id:'chocolat'}]);
+  await say('robin',`중간 집계 발표다. 쇼콜라 ${fmt(G.score)} 에클, 바닐라 ${fmt(G.vanilla)} 에클.`,{flash:true});
+  if(G.score>=G.vanilla){ await say('chocolat','앞서고 있어! 이대로 쭉쭉!',{face:'smile'}); await say('robin','방심하지 마라. 진홍 하트 하나면 뒤집힌다.'); }
+  else { await say('chocolat','바닐라가 앞서고 있어…!',{face:'panic'}); await say('robin','하트는 숫자가 아니라 깊이다. 마음을 쌓아라.'); }
+  await applyEff({hp:20});
+}
+async function stOgre(){
+  setBG('makai',2); setCast([{id:'chocolat'},{id:'vanilla'}]);
+  await say('narr','밤하늘이 갈라지며 기괴한 그림자—오그르다!',{speed:true, flash:true});
+  await say('vanilla','쇼콜라! 무서워…!',{face:'panic'});
+  const i=await choose(['바닐라 앞을 막아선다 「에투알=에클레르!」','「뮈르=드=리에르!」 덩굴 벽으로 함께 숨는다']);
+  if(i===0){
+    if(G.magic>=40){ await say('chocolat','에투알=에클레르!!',{style:'shout', face:'smile', flash:true, speed:true}); await say('narr','빛의 번개가 오그르를 쫓아냈다!'); await applyEff({bond:15, magic:5}); }
+    else { await say('narr','마력이 부족해 튕겨 나갔다…! 로비 선생님이 간신히 구해 주었다.'); await applyEff({hp:-25, bond:10}); }
+  } else { await say('narr','덩굴 벽 뒤에서 둘은 손을 꼭 잡고 버텼다.',{tone:true}); await applyEff({bond:12, intel:3}); }
+  setCast([{id:'chocolat'},{id:'pierre'}]);
+  await say('narr','사라지는 오그르 사이로… 피에르의 그림자가 보인 것 같았다.',{tone:true});
+  await applyEff({pierre:5});
+}
+async function stConfess(){
+  setBG('road'); setCast([{id:'chocolat'},{id:'pierre'}]);
+  await say('pierre','쇼콜라. 나는… 네가 생각하는 그런 사람이 아닐지도 몰라.',{face:'panic', tone:true});
+  const i=await choose(['"상관없어. 나는 지금의 피에르를 믿어"','"…솔직히 무서워"']);
+  if(i===0){ await say('pierre','…바보 같은 마녀.',{face:'smile', tone:true, flash:true}); await applyEff({trust:2, pierre:15}); }
+  else { await say('pierre','그래. 그게 맞아.',{face:'normal'}); await applyEff({pierre:-5}); }
+}
+async function nightEnd(){
+  const gain = 250 + rnd(0,250) + G.day*20;
+  G.vanilla += gain;
+  setBG('room',2); setCast([{id:'chocolat'}]);
+  await say('narr',`📔 ${G.day}일째 밤 — 로비의 집계\n쇼콜라 ${fmt(G.score)} 에클 / 바닐라 ${fmt(G.vanilla)} 에클 (오늘 +${fmt(gain)})`);
+  G.ecru += 150; toast('💰 로비 선생님의 하루 용돈 +150 에클');
+}
+
+/* ---------- 엔딩 ---------- */
+async function ritual(){
+  setBG('makai',2); setCast([{id:'candy'}]);
+  await say('narr','30일째 밤. 달의 문을 지나 마계의 궁전 「팔레」로.',{tone:true, flash:true});
+  await say('candy','인간계에서 모아 온 하트를 바쳐라.',{});
+  setCast([{id:'chocolat'},{id:'vanilla'}]);
+  await say('narr',`쇼콜라 ${fmt(G.score)} 에클. 바닐라 ${fmt(G.vanilla)} 에클.`,{speed:true});
+  let key;
+  if(G.hearts.noir>=4) key='noir';
+  else if(G.aff.pierre>=70 && G.trust>=2) key='pierre';
+  else if(G.score>=G.vanilla) key='queen';
+  else key='vanilla';
+  if(key==='pierre'){ setCast([{id:'chocolat'},{id:'pierre'}]); await say('pierre','…쇼콜라!',{face:'panic', speed:true}); }
+  return showEnding(key);
+}
+function showEnding(key){
+  const E=ENDINGS[key];
+  hideDlg(); $('menu').classList.remove('show'); ['hud','case','wardBtn'].forEach(id=>$(id).style.display='none');
+  setBG(E.bg,2);
+  const art={queen:[['chocolat','smile'],['candy','smile']], pierre:[['chocolat','smile'],['pierre','smile']], vanilla:[['vanilla','smile'],['chocolat','smile']], noir:[['chocolat','panic']]}[key];
+  $('endingArt').innerHTML=art.map(([id,f])=>drawPerson(id,f,'full',id==='chocolat'?G.look:null)).join('');
+  $('endTitle').textContent=E.title; $('endText').textContent=E.text;
+  $('ending').classList.toggle('noir', !!E.dark);
+  $('endScore').innerHTML=`최종 ${fmt(G.score)} 에클 vs 바닐라 ${fmt(G.vanilla)} 에클<br><small>${HEART_ORDER.map(k=>`${HEARTS[k].name} ${G.hearts[k]}`).join(' · ')}</small>`;
+  $('ending').classList.add('show'); $('ending').scrollTop=0;
+  Snd.sfx(key==='noir'?'sad':'fanfare');
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+}
+
+/* ---------- 메인 루프 ---------- */
+let running=false;
+async function mainLoop(){
+  running=true;
+  while(running){
+    if(G.slot>2){ G.slot=2; await nightEnd(); G.slot=0; G.day++; saveGame(true); toast('🌙 자동 저장 완료'); }
+    await stepOnce();
+  }
+}
+async function stepOnce(){
+  renderHUD(); setBG(SLOT_BG[G.slot]); setCast([{id:'chocolat'}]);
+  const d=G.day, s=G.slot, st=G.story;
+  if(d===1&&s===0&&!st.pro){ st.pro=1; await stPrologue(); }
+  if(d===3&&s===1&&!st.metP){ await stPierre(); }
+  if(d===8&&s===2&&!st.sofa){ st.sofa=1; await stSofa(); }
+  if(d===12&&s===1&&!st.noir){ st.noir=1; await stNoir(); }
+  if(d===16&&s===0&&!st.mid){ st.mid=1; await stMid(); }
+  if(d===20&&s===2&&!st.ogre){ st.ogre=1; await stOgre(); G.slot++; return; }
+  if(d===25&&s===1&&!st.conf){ st.conf=1; await stConfess(); }
+  if(d===30&&s===2){ running=false; await ritual(); return; }
+  if(G.forced){ G.forced=false; await doRest(true); }
+  else {
+    setBG(SLOT_BG[G.slot]); setCast([{id:'chocolat'}]);
+    const r=await showMenu();
+    if(r.abort) return;
+    if(r.act==='study') await doStudy();
+    else if(r.act==='heart') await doHeart(r.boy);
+    else if(r.act==='magic') await doMagic();
+    else if(r.act==='rest') await doRest(false);
+    else if(r.act==='walk') await doWalk();
+  }
+  if(G.hp<=0){ G.hp=0; G.forced=true; toast('😵 체력 0! 다음 턴은 강제 휴식'); }
+  G.slot++; renderHUD();
+}
+</script>
+<script>
+/* =========================================================
+   7. 옷장 (드레스업) / 타이틀 / 버튼
+   ========================================================= */
+const CROP = {hair:'40 10 220 280', ribbon:'50 10 200 190', top:'60 180 180 160', bottom:'50 280 200 130', dress:'40 180 220 230',
+              neck:'95 178 110 84', ear:'60 90 180 120', shoes:'90 460 120 160', hat:'20 -50 260 180'};
+let wardCat='hair';
+function openWard(){
+  if(!canSave) return toast('행동을 고르는 중에만 옷장을 열 수 있어요');
+  Snd.sfx('click'); $('ward').classList.add('show'); $('mirrorRoom').innerHTML=drawMirrorRoom(); renderWard();
+}
+function renderWard(){
+  $('wardEcru').textContent=fmt(G.ecru)+' 에클';
+  $('tabs').innerHTML=CATS.map(c=>`<button class="tab${c.k===wardCat?' on':''}" data-k="${c.k}" title="${c.n}"><svg viewBox="0 0 32 32">${CAT_ICON[c.k]}</svg></button>`).join('');
+  [...$('tabs').children].forEach(b=>b.onclick=()=>{ Snd.sfx('click'); wardCat=b.dataset.k; renderWard(); });
+  $('mirrorChar').innerHTML=drawPerson('chocolat','smile','full',G.look);
+  const o=outfit();
+  $('coordBadge').innerHTML=`코디 매력 <b style="color:#e0457f">+${o.bonus}</b>${o.set?` · ✨${o.set} +8`:''}`;
+  const grid=$('grid'); grid.innerHTML='';
+  ITEMS.filter(i=>i.cat===wardCat).forEach(it=>{
+    const owned=G.owned.includes(it.id), on=G.look[it.cat]===it.id;
+    const look=Object.assign({},DEFAULT_LOOK,{[it.cat]:it.id});
+    if(it.cat==='hair'||it.cat==='ribbon'||it.cat==='ear') look.hat='noHat';
+    if(it.cat==='neck') { look.top='knit'; }
+    const d=document.createElement('button'); d.className='item'+(on?' on':'')+(owned?'':' locked');
+    d.innerHTML=`<span class="gem">${drawHeart(gemOf(it),22)}</span><div class="pv">${drawPerson('chocolat','normal',CROP[it.cat],look)}</div>${it.name}<span class="price">${on?'♥ 착용중':owned?'보유':'🔒 '+fmt(it.price)+' 에클'}</span>`;
+    d.onclick=()=>pickItem(it);
+    grid.appendChild(d);
+  });
+}
+function pickItem(it){
+  if(!G.owned.includes(it.id)){
+    if(G.ecru<it.price){ Snd.sfx('sad'); return toast(`에클이 부족해요 (${fmt(it.price-G.ecru)} 부족)`); }
+    G.ecru-=it.price; G.owned.push(it.id); Snd.sfx('shard'); toast(`🛍️ ${it.name} 구입!`);
+  } else Snd.sfx('click');
+  G.look[it.cat]=it.id;
+  if((it.cat==='top'||it.cat==='bottom') && G.look.dress!=='noDress') G.look.dress='noDress';
+  renderWard(); renderHUD();
+}
+function closeWard(){
+  Snd.sfx('click'); $('ward').classList.remove('show');
+  const w=[...$('chars').children].find(x=>x.dataset.id==='chocolat'); if(w){ const c=cast.find(x=>x.id==='chocolat'); c.face='smile'; w.innerHTML=charSVG(c); }
+  renderHUD();
+}
+$('wardBtn').onclick=openWard; $('wardClose').onclick=closeWard;
+
+/* ---------- 보석함 ---------- */
+$('case').onclick=()=>{
+  Snd.sfx('click');
+  $('caseList').innerHTML=HEART_ORDER.map(k=>`<div class="heartRow">${drawHeart(k,26)}<div><b>${HEARTS[k].name}</b> × ${G.hearts[k]}<br><small style="color:#8a5a86">${HEARTS[k].desc} · ${HEARTS[k].ecru?fmt(HEARTS[k].ecru)+' 에클':'???'}</small></div></div>`).join('')
+    + `<hr style="border:0;border-top:2px dashed #ffb3d1"><div class="heartRow">♣ 바닐라와의 우정 ${G.bond} · ❄ 피에르 ${G.aff.pierre}</div>`
+    + BOY_IDS.filter(id=>id!=='pierre').map(id=>`<div class="heartRow"><b>${BOYS[id].name}</b><small>${BOYS[id].desc}</small><span style="margin-left:auto;color:#e0457f;white-space:nowrap">${hearts(G.aff[id])}</span></div>`).join('');
+  $('caseView').classList.add('show');
+};
+$('bCaseClose').onclick=()=>{ Snd.sfx('click'); $('caseView').classList.remove('show'); };
+
+/* ---------- 시작 / 버튼 ---------- */
+function startGame(state){
+  G=state;
+  ['title','ending'].forEach(id=>$(id).classList.remove('show'));
+  $('hud').style.display='flex'; $('case').style.display='block'; $('wardBtn').style.display='block';
+  curBG=''; renderHUD();
+  if(!running) mainLoop();
+}
+let audioStarted=false;
+document.addEventListener('pointerdown',()=>{ if(audioStarted) return; audioStarted=true; Snd.init(); Snd.play(fxMode==='star'?'night':'day'); },{capture:true});
+$('bookCover').onclick=()=>{ Snd.init(); Snd.sfx('shard'); $('bookCover').classList.add('open'); $('tapHint').style.visibility='hidden'; };
+$('bNew').onclick=()=>{ Snd.init(); Snd.sfx('click'); startGame(newState()); };
+$('bCont').onclick=()=>{ const d=loadData(); if(!d) return toast('저장된 데이터가 없어요'); Snd.sfx('click'); startGame(Object.assign(newState(),d)); };
+$('bRetry').onclick=()=>{ Snd.sfx('click'); $('ending').classList.remove('show'); showTitle(); };
+$('bSave').onclick=()=>{ Snd.sfx('click'); if(!canSave) return toast('행동을 고르는 중에만 저장할 수 있어요'); saveGame(false); };
+$('bLoad').onclick=()=>{
+  Snd.sfx('click');
+  if(!canSave) return toast('행동을 고르는 중에만 불러올 수 있어요');
+  const d=loadData(); if(!d) return toast('저장된 데이터가 없어요');
+  G=Object.assign(newState(),d); curBG=''; renderHUD(); toast('📖 불러왔어요!');
+  if(menuResolve){ const r=menuResolve; menuResolve=null; canSave=false; $('menu').classList.remove('show'); r({abort:true}); }
+};
+$('bMute').onclick=()=>{ Snd.init(); const m=Snd.toggleMute(); $('bMute').textContent=m?'🔇':'♪'; try{localStorage.setItem(MUTE_KEY,m?'1':'0');}catch(e){} };
+
+function showTitle(){
+  running=false;
+  ['hud','case','wardBtn'].forEach(id=>$(id).style.display='none'); hideDlg(); $('menu').classList.remove('show');
+  $('title').classList.add('show'); $('bookCover').classList.remove('open'); $('tapHint').style.visibility='visible';
+  $('titleSky').innerHTML=drawTitleSky(); $('bookEmb').innerHTML=drawEmblem();
+  $('titleChars').innerHTML=drawPerson('chocolat','smile','upper')+drawPerson('vanilla','normal','upper');
+  $('bCont').disabled=!loadData();
+  curBG=''; $('bg').innerHTML=drawBG('makai',2); fxMode='star'; Snd.play('night');
+}
+$('cornerL').innerHTML=drawCorner(); $('cornerR').innerHTML=drawCorner();
+try{ if(localStorage.getItem(MUTE_KEY)==='1'){ Snd.mutedInit=true; $('bMute').textContent='🔇'; } }catch(e){}
+showTitle();
+</script>
+</body>
+</html>
