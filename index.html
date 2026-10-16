@@ -11,7 +11,10 @@
       · 하트 모으기 : 남자아이를 골라 상황 선택지 → '아그랑디스망!'으로 하트 채취
       · 마법 연습   : 마력↑ 체력↓ (마력이 높을수록 하트 채취 성공률↑)
       · 휴식        : 체력↑
-      · 마을 산책   : 랜덤 이벤트
+      · 마을 산책   : 랜덤 이벤트 (가끔 '에클 조각 받기' 미니게임)
+      · 바닐라 대결 : 하루 1회 하트 줄다리기 — Space 연타! 이기면 바닐라의 하트를 가져온다
+  - 하트를 꺼낼 때 '아그랑디스망' 타이밍 미니게임: 별이 결계 존에 올 때 Space (퍼펙트=하트 색 업그레이드)
+  - 20일째 밤 오그르 습격: 클릭/터치로 오그르 퇴치
   - 👗 옷장 버튼: 에클로 옷을 사서 쇼콜라를 꾸밉니다. (턴 소모 없음, 코디 매력 보너스)
   - 💝 보석함(하트 케이스)을 누르면 모은 하트를 볼 수 있습니다.
   - 하트 가치(공식 설정): 피스 5 / 오렌지 300 / 그린 350 / 핑크 1000 /
@@ -41,7 +44,7 @@ button{font-family:inherit;cursor:pointer}
   background:radial-gradient(circle at 7px 0,#ffe3ef 6px,transparent 7px) 0 0/14px 14px repeat-x,
              radial-gradient(circle at 7px 0,var(--pink2) 7.5px,transparent 8.5px) 0 0/14px 14px repeat-x}
 #app::before{top:0} #app::after{bottom:0;transform:scaleY(-1)}
-.corner{position:absolute;width:64px;height:64px;z-index:41;pointer-events:none}
+.corner{position:absolute;width:48px;height:48px;z-index:41;pointer-events:none}
 .corner svg{width:100%;height:100%}
 .c-tl{top:2px;left:2px} .c-tr{top:2px;right:2px;transform:scaleX(-1)}
 
@@ -87,8 +90,8 @@ button{font-family:inherit;cursor:pointer}
 .stat .lbl{display:flex;justify-content:space-between}
 .bar{height:7px;background:#f3e4ef;border-radius:5px;overflow:hidden;border:1px solid #f0cde0}
 .bar i{display:block;height:100%;border-radius:5px;transition:width .5s}
-#topbtns{display:flex;gap:4px}
-#topbtns button{width:34px;height:34px;border-radius:50%;border:2px solid var(--gold2);background:#fff;font-size:15px;padding:0;box-shadow:0 2px 0 var(--plum3)}
+#topbtns{display:flex;gap:6px;pointer-events:auto;position:relative;z-index:45;margin-right:34px}
+#topbtns button{width:38px;height:38px;border-radius:50%;border:2px solid var(--gold2);background:#fff;font-size:15px;padding:0;box-shadow:0 2px 0 var(--plum3)}
 #topbtns button:active{transform:translateY(2px);box-shadow:none}
 #rival{font-size:11.5px}
 .vs{display:grid;grid-template-columns:48px 1fr 64px;align-items:center;gap:4px;margin:1px 0}
@@ -125,7 +128,7 @@ button{font-family:inherit;cursor:pointer}
 #menu{position:absolute;left:8px;right:8px;bottom:18px;z-index:25;display:none}
 #menu.show{display:block;animation:pop .3s}
 #menuTitle{text-align:center;font-size:15px;margin-bottom:6px;color:#fff;text-shadow:0 0 4px var(--pink3),0 0 8px var(--pink3)}
-#acts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+#acts{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .act{background:linear-gradient(#fff,#ffeaf4);border:2.5px solid var(--gold2);border-radius:18px;padding:8px 2px 6px;font-size:13px;color:var(--ink);
   box-shadow:0 0 0 2px var(--plum2),0 4px 0 var(--plum3);display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
 .act .ico{font-size:24px;line-height:1}
@@ -378,7 +381,8 @@ const ACTIONS = [
   {id:'heart', ico:'💗', name:'하트 모으기', hint:'남자아이 선택'},
   {id:'magic', ico:'🪄', name:'마법 연습', hint:'마력↑ 체력↓'},
   {id:'rest',  ico:'🛏️', name:'휴식', hint:'체력↑'},
-  {id:'walk',  ico:'🌙', name:'마을 산책', hint:'랜덤 이벤트'}
+  {id:'walk',  ico:'🌙', name:'마을 산책', hint:'랜덤 이벤트'},
+  {id:'duel',  ico:'⚔️', name:'바닐라 대결', hint:'하트 줄다리기'}
 ];
 
 /* 하트 채취 상황 — {n}: 대상 이름. type: romance(두근)/friend(우정)/clumsy(덜렁·버럭) */
@@ -967,7 +971,16 @@ const Snd = (() => {
     if(bar%4===3) bell(ch[3]+36,t+beat*3.5,.05);
     return beat*4;
   }
-  const THEMES = { day:{fn:dayBar,beat:60/138}, night:{fn:nightBar,beat:60/58} };
+  /* --- 대결 테마: A단조 질주 아르페지오 (4/4) --- */
+  const BAT=[[45,57,60,64],[41,53,57,60],[43,55,59,62],[40,52,56,59]];
+  function battleBar(bar,t,beat){
+    const ch=BAT[bar%4];
+    for(let i=0;i<4;i++) musicBox(ch[0]-12+(i%2?12:0),t+i*beat,beat*.5,.12);
+    [0,1,2,3,2,1,2,3].forEach((k,i)=>musicBox(ch[k]+12,t+i*beat/2,beat*.4,.09));
+    bell(ch[3]+24-(bar%2?0:5),t,.06); if(bar%2) bell(ch[2]+24,t+beat*2,.05);
+    return beat*4;
+  }
+  const THEMES = { day:{fn:dayBar,beat:60/138}, night:{fn:nightBar,beat:60/58}, battle:{fn:battleBar,beat:60/168} };
 
   function tick(){
     if(!ctx || !theme) return;
@@ -991,6 +1004,7 @@ const Snd = (() => {
     else if(type==='shard'){ [84,88,91,96,100].forEach((m,i)=>bell(m,t+i*.06,.12,sfxBus)); }
     else if(type==='sad'){ [72,68,63].forEach((m,i)=>bell(m,t+i*.16,.1,sfxBus)); }
     else if(type==='level'){ [72,76,79,84].forEach((m,i)=>musicBox(m,t+i*.08,.2,.2,sfxBus)); musicBox(88,t+.34,.6,.22,sfxBus); }
+    else if(type==='tick'){ musicBox(rnd(84,91),t,.05,.08,sfxBus); }
     else if(type==='fanfare'){
       const seq=[[72,0,.2],[72,.18,.2],[72,.36,.2],[77,.56,.6],[76,1.1,.2],[77,1.3,.2],[81,1.5,1.4]];
       seq.forEach(([m,o,d])=>{ musicBox(m,t+o,d,.22,sfxBus); musicBox(m-12,t+o,d,.12,sfxBus); });
@@ -1168,7 +1182,7 @@ function choose(opts){
 function hideDlg(){ $('dlg').classList.remove('show'); effects(); }
 function onAdvance(){ if(typing){ skipType=true; return; } if(advance){ Snd.sfx('click'); advance(); } }
 $('dlg').addEventListener('click', onAdvance);
-document.addEventListener('keydown', e=>{ if((e.key===' '||e.key==='Enter') && $('dlg').classList.contains('show')){ e.preventDefault(); onAdvance(); } });
+document.addEventListener('keydown', e=>{ if(typeof miniActive!=='undefined' && miniActive) return; if((e.key===' '||e.key==='Enter') && $('dlg').classList.contains('show')){ e.preventDefault(); onAdvance(); } });
 
 /* ---------- 세이브 / 로드 ---------- */
 let canSave=false;
@@ -1196,6 +1210,7 @@ function showMenu(){
       b.innerHTML=`<span class="ico">${a.ico}</span>${a.name}<small>${a.id==='heart'&&G.slot===2?'밤엔 불가':a.hint}</small>`;
       if(a.id==='magic' && G.hp<10) b.disabled=true;
       if(a.id==='heart' && G.slot===2) b.disabled=true;
+      if(a.id==='duel' && (!G.story.duel || G.duelDay===G.day)){ b.disabled=true; b.querySelector('small').textContent=G.story.duel?'오늘은 끝':'5일째 해금'; }
       b.onclick=()=>{ Snd.sfx('click'); if(a.id==='heart'){ $('npcPick').classList.toggle('show'); return; } finish({act:a.id}); };
       $('acts').appendChild(b);
     });
@@ -1215,10 +1230,11 @@ function showMenu(){
 /* ---------- 하트 모으기 ---------- */
 async function casting(boy){
   await say('chocolat','아그랑디스망!!', {style:'shout', face:'smile', barrier:true, speed:true, flash:true});
-  const ok = Math.random() < Math.min(.95, .55 + G.magic/200);
-  if(!ok){ setFace('chocolat','panic'); await say('narr','결계가 흔들리더니 하트가 다시 가슴 속으로 쏙 들어가 버렸다…! (마력 부족)',{}); return false; }
-  await say('narr',`결계 속, ${BOYS[boy].name}의 가슴에서 하트 결정이 떠오른다…!`,{barrier:true, tone:true});
-  return true;
+  const r = await timingGame();
+  if(r==='miss'){ setFace('chocolat','panic'); await say('narr','결계가 흔들리더니 하트가 다시 가슴 속으로 쏙 들어가 버렸다…!',{}); return false; }
+  if(r==='perfect') await say('narr',`✨ 퍼펙트! 결계가 완벽하게 안정되어 ${BOYS[boy].name}의 하트가 한층 깊은 색으로 빛난다!`,{barrier:true, tone:true, flash:true});
+  else await say('narr',`결계 속, ${BOYS[boy].name}의 가슴에서 하트 결정이 떠오른다…!`,{barrier:true, tone:true});
+  return r;
 }
 function heartColor(boy, type){
   if(type==='friend') return 'green';
@@ -1245,14 +1261,16 @@ async function doHeart(boy){
   G.aff[boy]=Math.max(0,Math.min(100,G.aff[boy]+gain));
   toast(`${B.name} 마음 ${gain>0?'♥ +'+gain:'💦 '+gain}`);
   if(c.type==='clumsy' && Math.random()<.4){ await say('chocolat','(으… 또 성질부렸다…)',{style:'thought'}); addStat('charm',1); return; }
-  const col=heartColor(boy, c.type);
+  let col=heartColor(boy, c.type);
   if(c.type!=='clumsy'){
     setCast([{id:'chocolat'},{id:boy},{id:'duke'}]);
     await say('duke', `${B.name}의 하트가 보인다. 지금 꺼내면… ${HEARTS[col].name} 하트(${fmt(HEARTS[col].ecru)} 에클) 정도겠군.`, {});
     const k=await choose(['「아그랑디스망!」 지금 하트를 꺼낸다', '아직이야… 마음이 더 자랄 때까지 기다린다']);
     if(k===1){ await say('chocolat','(조금만 더… 더 반짝이는 하트가 될 때까지!)',{style:'thought', face:'smile'}); addStat('charm',1); return; }
   } else await say('chocolat','(지, 지금이다! 놀란 틈에!)', {style:'thought', face:'smile'});
-  if(!await casting(boy)) return;
+  const cr=await casting(boy); if(!cr) return;
+  if(cr==='perfect' && col!==UPGRADE[col]) toast(`✨ ${HEARTS[col].name} → ${HEARTS[UPGRADE[col]].name} 업그레이드!`);
+  if(cr==='perfect') col=UPGRADE[col];
   await applyEff({heart:col, from:boy});
   if(col==='noir'){ setFace(boy,'panic'); await say('duke','쇼콜라! 그건 노아르야! 질투의 어둠이 묻어 있다고! 함부로 다루지 마!',{face:'panic'}); }
   else if(col!=='pis'){
@@ -1300,6 +1318,7 @@ async function doRest(forced){
   return applyEff({hp: forced?45:(G.slot===2?40:30)});
 }
 async function doWalk(){
+  if(Math.random()<.3) return doRain();
   let pool=EVENTS.filter(e=>!G.seenEv.slice(-6).includes(e.title));
   if(G.slot!==2) pool=pool.filter(e=>!e.night);
   if(!G.story.metP) pool=pool.filter(e=>e.who!=='pierre');
@@ -1370,7 +1389,9 @@ async function stOgre(){
   await say('vanilla','쇼콜라! 무서워…!',{face:'panic'});
   const i=await choose(['바닐라 앞을 막아선다 「에투알=에클레르!」','「뮈르=드=리에르!」 덩굴 벽으로 함께 숨는다']);
   if(i===0){
-    if(G.magic>=40){ await say('chocolat','에투알=에클레르!!',{style:'shout', face:'smile', flash:true, speed:true}); await say('narr','빛의 번개가 오그르를 쫓아냈다!'); await applyEff({bond:15, magic:5}); }
+    await say('chocolat','에투알=에클레르!!',{style:'shout', face:'smile', flash:true, speed:true});
+    Snd.play('battle'); const ok=await ogreWhack(); curBG=''; setBG('makai',2);
+    if(ok){ await say('narr','빛의 번개가 오그르를 모두 쫓아냈다!',{flash:true}); await applyEff({bond:15, magic:5}); }
     else { await say('narr','마력이 부족해 튕겨 나갔다…! 로비 선생님이 간신히 구해 주었다.'); await applyEff({hp:-25, bond:10}); }
   } else { await say('narr','덩굴 벽 뒤에서 둘은 손을 꼭 잡고 버텼다.',{tone:true}); await applyEff({bond:12, intel:3}); }
   setCast([{id:'chocolat'},{id:'pierre'}]);
@@ -1440,6 +1461,7 @@ async function stepOnce(){
   if(d===16&&s===0&&!st.mid){ st.mid=1; await stMid(); }
   if(d===20&&s===2&&!st.ogre){ st.ogre=1; await stOgre(); G.slot++; return; }
   if(d===25&&s===1&&!st.conf){ st.conf=1; await stConfess(); }
+  if(d>=5&&s===1&&!st.duel){ st.duel=1; await stDuelIntro(); G.slot++; return; }
   if(d===30&&s===2){ running=false; await ritual(); return; }
   if(G.forced){ G.forced=false; await doRest(true); }
   else {
@@ -1451,9 +1473,244 @@ async function stepOnce(){
     else if(r.act==='magic') await doMagic();
     else if(r.act==='rest') await doRest(false);
     else if(r.act==='walk') await doWalk();
+    else if(r.act==='duel') await doDuel();
   }
   if(G.hp<=0){ G.hp=0; G.forced=true; toast('😵 체력 0! 다음 턴은 강제 휴식'); }
   G.slot++; renderHUD();
+}
+</script>
+<script>
+/* =========================================================
+   8. 미니게임 — 줄다리기 / 아그랑디스망 타이밍 / 에클 조각 받기 / 오그르 퇴치
+   조작: Space(또는 화면의 큰 버튼 탭), 방향키 ← →, 마우스/터치
+   ========================================================= */
+let miniActive=false;
+document.head.insertAdjacentHTML('beforeend',`<style>
+#mini{background:radial-gradient(ellipse at center,rgba(90,30,90,.92),rgba(26,8,32,.96));z-index:55;padding:22px 14px}
+#mini .mt{color:#fff;font-size:24px;text-shadow:0 0 8px #ff5fa2,2px 2px 0 #7a2c6e;margin:0}
+#mini .mh{color:#ffd6ea;font-size:13px;margin:4px 0 10px}
+#mArea{position:relative;width:100%;max-width:560px;height:min(52vh,380px);border:3px solid var(--gold2);border-radius:18px;overflow:hidden;
+  background:linear-gradient(#ffe6f2,#ffd0e6);box-shadow:0 0 0 3px var(--plum2),inset 0 0 30px rgba(255,255,255,.6);touch-action:none;user-select:none}
+#mTime{width:100%;max-width:560px;height:12px;border-radius:8px;background:#3a1238;margin-top:8px;overflow:hidden;border:2px solid var(--gold2)}
+#mTime i{display:block;height:100%;background:linear-gradient(90deg,#ffb36b,#ff5fa2);transition:width .1s linear}
+#mInfo{color:#fff;font-size:15px;margin-top:6px;min-height:20px}
+#mTap{margin-top:8px;width:min(320px,90%);padding:16px;font-size:20px;border-radius:40px;border:3px solid #fff;color:#fff;
+  background:linear-gradient(#ff7fb6,#e0457f);box-shadow:0 6px 0 #a02a5c;touch-action:manipulation}
+#mTap:active{transform:translateY(5px);box-shadow:none}
+.mpop{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:34px;color:#fff;-webkit-text-stroke:2px #e0457f;font-weight:bold;
+  animation:mpop .7s forwards;pointer-events:none;white-space:nowrap;z-index:5}
+@keyframes mpop{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}30%{transform:translate(-50%,-50%) scale(1.25);opacity:1}100%{transform:translate(-50%,-90%) scale(1);opacity:0}}
+.tugChar{position:absolute;bottom:22%;width:38%;transition:transform .1s}
+.tugChar svg{width:100%;height:auto}
+.rope{position:absolute;left:0;right:0;top:66%;height:10px;background:repeating-linear-gradient(45deg,#c9926a 0 8px,#8a5a3a 8px 14px);border-radius:5px}
+.tmark{position:absolute;top:66%;width:44px;height:44px;margin:-17px 0 0 -22px;transition:left .08s}
+.tline{position:absolute;top:30%;bottom:10%;width:4px;background:repeating-linear-gradient(#fff 0 6px,transparent 6px 12px)}
+.fall{position:absolute;width:38px;height:38px;margin-left:-19px}
+.basket{position:absolute;bottom:4px;width:84px;margin-left:-42px}
+.ogre{position:absolute;width:23%;aspect-ratio:1;margin:-11.5% 0 0 -11.5%;cursor:pointer;animation:ogreIn .18s}
+@keyframes ogreIn{from{transform:scale(0)}to{transform:scale(1)}}
+.ogre.hit{animation:ogreHit .3s forwards}
+@keyframes ogreHit{to{transform:scale(1.4) rotate(30deg);opacity:0;filter:brightness(3)}}
+</style>`);
+$('app').insertAdjacentHTML('beforeend',`<div class="screen" id="mini"><h2 class="mt" id="mT"></h2><div class="mh" id="mH"></div><div id="mArea"></div><div id="mTime"><i id="mTi"></i></div><div id="mInfo"></div><button id="mTap">연타!</button></div>`);
+
+function miniOpen(title, help, tapLabel){
+  miniActive=true; hideDlg(); $('menu').classList.remove('show');
+  $('mT').textContent=title; $('mH').innerHTML=help; $('mInfo').textContent='';
+  $('mTap').style.display=tapLabel?'block':'none'; $('mTap').textContent=tapLabel||'';
+  $('mArea').innerHTML=''; $('mTi').style.width='100%'; $('mini').classList.add('show');
+}
+function miniClose(){ miniActive=false; $('mini').classList.remove('show'); $('mTap').onpointerdown=null; }
+function mpop(txt,color){ const d=document.createElement('div'); d.className='mpop'; d.textContent=txt; if(color) d.style.webkitTextStrokeColor=color; $('mArea').appendChild(d); setTimeout(()=>d.remove(),720); }
+async function countdown(){
+  for(const t of ['3','2','1','START!']){ mpop(t); Snd.sfx(t==='START!'?'level':'tick'); await wait(t==='START!'?500:650); }
+}
+/* 공용 입력: Space / 탭 버튼 */
+function onPress(fn){
+  const key=e=>{ if(e.code==='Space'||e.key===' '){ e.preventDefault(); e.stopPropagation(); if(!e.repeat) fn(); } };
+  document.addEventListener('keydown',key,true);
+  $('mTap').onpointerdown=e=>{ e.preventDefault(); fn(); };
+  return ()=>{ document.removeEventListener('keydown',key,true); $('mTap').onpointerdown=null; };
+}
+
+/* ---------- ① 바닐라와 줄다리기 (Space 연타) ---------- */
+function tugOfWar(){
+  return new Promise(async res=>{
+    miniOpen('⚔ 하트 줄다리기 ⚔','<b>Space</b>를 연타하거나 아래 버튼을 마구 눌러요! 하트 깃발을 왼쪽 선까지 끌어오면 승리!<br>블랑카가 응원하면 바닐라의 힘이 세져요. 정신 차려요!','💗 당겨라! (Space)');
+    const A=$('mArea');
+    A.innerHTML=`<div class="tline" style="left:18%"></div><div class="tline" style="left:82%"></div><div class="rope"></div>
+      <div class="tugChar" id="tC" style="left:-4%">${drawPerson('chocolat','normal','upper',G.look)}</div>
+      <div class="tugChar" id="tV" style="right:-4%">${drawPerson('vanilla','normal','upper')}</div>
+      <div class="tmark" id="tM" style="left:50%">${drawHeart('pink',44)}</div>
+      <div style="position:absolute;right:30%;top:8%;width:15%" id="tB">${drawPet('mouse','normal')}</div>`;
+    let pos=0, t=0, presses=0, surge=0, nextSurge=2.5, lastFace='normal', combo=0, lastPress=0;
+    const LIMIT=15, myPow=4.6+G.hp/100*1.2+G.magic/80, vanPow=15+G.day*.55;
+    await countdown();
+    const off=onPress(()=>{ pos+=myPow*(surge>0?.85:1); presses++; const now=performance.now(); combo = now-lastPress<160 ? combo+1 : 0; lastPress=now;
+      Snd.sfx('tick'); if(combo===12){ mpop('쇼콜라 파워!!'); pos+=8; } });
+    let last=performance.now(), done=false;
+    const loop=now=>{
+      if(done) return;
+      const dt=Math.min(.05,(now-last)/1000); last=now; t+=dt;
+      nextSurge-=dt; if(nextSurge<=0){ surge=.9; nextSurge=2+Math.random()*2.5; mpop('블랑카 응원!','#8fa6ff'); }
+      if(surge>0) surge-=dt;
+      pos-=vanPow*(surge>0?2.3:1)*dt*(1+Math.sin(t*3)*.25);
+      pos=Math.max(-100,Math.min(100,pos));
+      $('tM').style.left=(50-pos*.32)+'%';
+      $('tC').style.transform=`translateX(${-pos*.15}px) rotate(${-pos*.05}deg)`; $('tV').style.transform=`translateX(${-pos*.15}px) rotate(${-pos*.05}deg)`;
+      $('tB').style.transform=surge>0?`translateY(${Math.sin(t*30)*6}px) scale(1.2)`:'none';
+      const f = pos>25?'smile':pos<-25?'panic':'normal';
+      if(f!==lastFace){ lastFace=f; $('tC').innerHTML=drawPerson('chocolat',f,'upper',G.look); $('tV').innerHTML=drawPerson('vanilla',f==='smile'?'panic':f==='panic'?'smile':'normal','upper'); }
+      $('mTi').style.width=Math.max(0,(1-t/LIMIT)*100)+'%';
+      $('mInfo').textContent=`연타 ${presses}회 · 남은 시간 ${Math.max(0,LIMIT-t).toFixed(1)}초`;
+      if(pos>=100||pos<=-100||t>=LIMIT){
+        done=true; off(); const win = pos>=100 || (t>=LIMIT && pos>0);
+        mpop(win?'WIN!!':'LOSE…', win?'#e0457f':'#5a6ab8'); Snd.sfx(win?'level':'sad');
+        setTimeout(()=>{ miniClose(); res(win); },1300); return;
+      }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  });
+}
+
+/* ---------- ② 아그랑디스망 타이밍 (결계 안정) ---------- */
+function timingGame(){
+  return new Promise(async res=>{
+    miniOpen('✦ 아그랑디스망 ✦','움직이는 별이 <b style="color:#ffe36b">결계 존</b>에 들어왔을 때 <b>Space</b> 또는 버튼! 한가운데 <b style="color:#ff5fa2">하트 존</b>이면 퍼펙트 — 하트가 한 단계 진한 색이 돼요!','✦ 결계 고정! (Space)');
+    const A=$('mArea');
+    const zw=Math.min(40, 16+G.magic/4), zc=25+Math.random()*50, pw=6;
+    A.style.background='radial-gradient(circle,#5a2a7a,#1c0a2e)';
+    A.innerHTML=`<div style="position:absolute;left:8%;right:8%;top:46%;height:34px;border-radius:17px;background:#2a1440;border:3px solid #f3c98b">
+      <div style="position:absolute;top:0;bottom:0;left:${zc-zw/2}%;width:${zw}%;background:rgba(255,227,107,.55);border-radius:12px"></div>
+      <div style="position:absolute;top:-4px;bottom:-4px;left:${zc-pw/2}%;width:${pw}%;background:#ff5fa2;border-radius:6px;box-shadow:0 0 10px #ff5fa2"></div>
+      <div id="tgS" style="position:absolute;top:-10px;width:50px;height:50px;margin-left:-25px"><svg viewBox="0 0 40 40"><path d="${starPath(20,20,19,8)}" fill="#fff6c8" stroke="#ffb3d1" stroke-width="2"/></svg></div></div>
+      <div style="position:absolute;left:0;right:0;top:12%;text-align:center;font-size:40px">💗</div>`;
+    await countdown();
+    let x=0, dir=1, t=0, done=false, last=performance.now();
+    const speed=70+G.day*2.2;
+    const finish=r=>{ if(done) return; done=true; off(); mpop(r==='perfect'?'PERFECT!!':r==='good'?'GOOD!':'MISS…', r==='miss'?'#5a6ab8':'#e0457f');
+      Snd.sfx(r==='miss'?'sad':r==='perfect'?'shard':'level'); A.style.background=''; setTimeout(()=>{ miniClose(); res(r); },900); };
+    const off=onPress(()=>{ const d=Math.abs(x-zc); finish(d<=pw/2+1?'perfect':d<=zw/2?'good':'miss'); });
+    const loop=now=>{
+      if(done) return;
+      const dt=Math.min(.05,(now-last)/1000); last=now; t+=dt;
+      x+=dir*speed*dt*(1+Math.sin(t*2.3)*.35); if(x>=100){x=100;dir=-1;} if(x<=0){x=0;dir=1;}
+      $('tgS').style.left=x+'%'; $('mTi').style.width=Math.max(0,(1-t/5)*100)+'%';
+      if(t>=5) return finish('miss');
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  });
+}
+
+/* ---------- ③ 에클 조각 받기 (← → / 드래그) ---------- */
+function ecruRain(){
+  return new Promise(async res=>{
+    miniOpen('💰 로비의 특훈: 에클 조각 받기','<b>← →</b> 방향키 또는 화면을 드래그해서 보석함으로 하트 조각을 받아요! <b>검은 노아르</b>는 피하세요!',null);
+    const A=$('mArea');
+    A.innerHTML=`<div class="basket" id="bk" style="left:50%">${drawCase(1)}</div>`;
+    await countdown();
+    let bx=50, t=0, got=0, items=[], spawn=0, done=false, last=performance.now(), keys={};
+    const LIMIT=15, VAL={pis:10,orange:60,green:70,pink:200,noir:-150};
+    const kd=e=>{ if(e.key==='ArrowLeft'||e.key==='ArrowRight'){ keys[e.key]=e.type==='keydown'; e.preventDefault(); } };
+    document.addEventListener('keydown',kd,true); document.addEventListener('keyup',kd,true);
+    const mv=e=>{ const r=A.getBoundingClientRect(); bx=Math.max(6,Math.min(94,(e.clientX-r.left)/r.width*100)); };
+    A.addEventListener('pointermove',mv); A.addEventListener('pointerdown',mv);
+    const loop=now=>{
+      if(done) return;
+      const dt=Math.min(.05,(now-last)/1000); last=now; t+=dt;
+      if(keys.ArrowLeft) bx-=70*dt; if(keys.ArrowRight) bx+=70*dt; bx=Math.max(6,Math.min(94,bx));
+      $('bk').style.left=bx+'%';
+      spawn-=dt;
+      if(spawn<=0){ spawn=.35+Math.random()*.35-Math.min(.2,t*.01);
+        const r=Math.random(), type=r<.35?'pis':r<.62?'orange':r<.78?'green':r<.88?'pink':'noir';
+        const el=document.createElement('div'); el.className='fall'; el.innerHTML=drawHeart(type,38); A.appendChild(el);
+        items.push({el,type,x:5+Math.random()*90,y:-8,v:28+Math.random()*22+t*1.5}); }
+      for(const it of items){ it.y+=it.v*dt; it.el.style.left=it.x+'%'; it.el.style.top=it.y+'%';
+        if(it.y>82 && it.y<96 && Math.abs(it.x-bx)<9 && !it.dead){ it.dead=true; it.el.remove(); got+=VAL[it.type];
+          if(it.type==='noir'){ mpop('노아르!','#2a1428'); Snd.sfx('sad'); } else { Snd.sfx('tick'); if(it.type==='pink') mpop('+200'); } }
+        if(it.y>105 && !it.dead){ it.dead=true; it.el.remove(); } }
+      items=items.filter(i=>!i.dead);
+      $('mTi').style.width=Math.max(0,(1-t/LIMIT)*100)+'%'; $('mInfo').textContent=`모은 에클 ${fmt(got)} · ${Math.max(0,LIMIT-t).toFixed(1)}초`;
+      if(t>=LIMIT){ done=true; document.removeEventListener('keydown',kd,true); document.removeEventListener('keyup',kd,true);
+        mpop('FINISH!'); Snd.sfx('level'); setTimeout(()=>{ miniClose(); res(Math.max(0,got)); },1100); return; }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  });
+}
+
+/* ---------- ④ 오그르 퇴치 (탭/클릭) ---------- */
+function ogreWhack(){
+  return new Promise(async res=>{
+    const need=Math.max(6, 11-Math.floor(G.magic/20));
+    miniOpen('⚡ 에투알=에클레르! ⚡',`튀어나오는 오그르를 <b>클릭/터치</b>해서 빛의 번개로 쫓아내요! 목표 <b>${need}마리</b>`,null);
+    const A=$('mArea'); A.style.background='radial-gradient(circle at 50% 30%,#4a1a6a,#12061e)';
+    await countdown();
+    let hits=0, t=0, done=false, last=performance.now(), spawn=0;
+    const ogreSVG=`<svg viewBox="0 0 100 100"><path d="M50,8 Q86,10 90,52 Q94,92 50,94 Q6,92 10,52 Q14,10 50,8Z" fill="#1a0a24" stroke="#6a2a8a" stroke-width="4"/>
+      <path d="M22,20 L14,2 L34,14Z M78,20 L86,2 L66,14Z" fill="#1a0a24"/><ellipse cx="34" cy="46" rx="9" ry="6" fill="#ff2a4a"/><ellipse cx="66" cy="46" rx="9" ry="6" fill="#ff2a4a"/>
+      <path d="M30,70 L38,62 L46,70 L54,62 L62,70 L70,62" stroke="#ff7fb6" stroke-width="3" fill="none"/></svg>`;
+    const loop=now=>{
+      if(done) return;
+      const dt=Math.min(.05,(now-last)/1000); last=now; t+=dt; spawn-=dt;
+      if(spawn<=0){ spawn=.55+Math.random()*.4;
+        const o=document.createElement('div'); o.className='ogre'; o.innerHTML=ogreSVG;
+        o.style.left=(15+Math.floor(Math.random()*3)*35)+'%'; o.style.top=(22+Math.floor(Math.random()*3)*28)+'%';
+        o.onpointerdown=e=>{ e.preventDefault(); if(o.classList.contains('hit')) return; o.classList.add('hit'); hits++; Snd.sfx('shard'); mpop('⚡'); setTimeout(()=>o.remove(),300); };
+        A.appendChild(o); setTimeout(()=>{ if(!o.classList.contains('hit')) o.remove(); }, 900); }
+      $('mTi').style.width=Math.max(0,(1-t/12)*100)+'%'; $('mInfo').textContent=`퇴치 ${hits} / ${need}`;
+      if(t>=12||hits>=need){ done=true; const win=hits>=need; mpop(win?'CLEAR!!':'FAILED…', win?'#e0457f':'#5a6ab8'); Snd.sfx(win?'level':'sad');
+        setTimeout(()=>{ A.style.background=''; miniClose(); res(win); },1200); return; }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  });
+}
+
+/* ---------- 게임 연결 ---------- */
+const UPGRADE={pis:'orange', orange:'pink', green:'pink', pink:'violet', violet:'crimson', crimson:'crimson', noir:'pis'};
+async function doDuel(){
+  G.duelDay=G.day;
+  setBG('road'); setCast([{id:'chocolat'},{id:'vanilla'},{id:'blanca'}]);
+  await say('blanca','바닐라 님! 오늘도 쇼콜라 따위 이겨 버려요~!',{face:'smile'});
+  await say('vanilla','쇼콜라… 오늘은 나도 안 질 거야!',{face:'normal'});
+  await say('chocolat','좋아! 이기면 네가 모은 하트 하나 가져간다!',{face:'smile', speed:true, style:'shout'});
+  Snd.play('battle');
+  const win=await tugOfWar();
+  curBG=''; setBG('road');
+  setCast([{id:'chocolat',face:win?'smile':'panic'},{id:'vanilla',face:win?'panic':'smile'}]);
+  if(win){
+    const pool=G.day<10?['orange','orange','pink','green']:G.day<20?['orange','pink','pink','violet']:['pink','violet','violet','crimson'];
+    let type=pick(pool); const val=HEARTS[type].ecru;
+    if(G.vanilla<val) type='orange';
+    G.vanilla=Math.max(0,G.vanilla-HEARTS[type].ecru);
+    await say('vanilla','으앙… 내 하트가…!',{face:'panic'});
+    await say('narr',`바닐라의 보석함에서 ${HEARTS[type].name} 하트가 튀어나왔다!`,{flash:true, tone:true});
+    await applyEff({heart:type, from:'vanilla', bond:3});
+    await say('vanilla','…다음엔 내가 이길 거야. 좋은 승부였어, 쇼콜라.',{face:'smile'});
+  } else {
+    await say('blanca','오호호! 역시 바닐라 님! 벌칙으로 용돈은 압수~',{face:'smile'});
+    await applyEff({ecru:-300, hp:-10, bond:3});
+    await say('vanilla','미, 미안해 쇼콜라… 다음에 또 하자!',{face:'normal'});
+  }
+}
+async function stDuelIntro(){
+  setBG('road'); setCast([{id:'chocolat'},{id:'blanca'}]);
+  await say('blanca','어머 쇼콜라~ 하트가 그렇게 적어서야 바닐라 님 상대가 되겠어?',{face:'smile'});
+  await say('chocolat','뭐라고?! 좋아, 바닐라랑 정정당당하게 승부야!',{face:'panic', speed:true});
+  await say('narr','💡 이제 매일 한 번 「⚔ 바닐라 대결」로 하트 줄다리기를 할 수 있다.\n이기면 바닐라가 모은 하트를 하나 가져온다! (Space 연타 / 버튼 연타)');
+  await doDuel();
+}
+async function doRain(){
+  setBG('road'); setCast([{id:'chocolat'},{id:'robin'}]);
+  await say('robin','어이 쇼콜라, 산책할 시간 있으면 특훈이다. 떨어지는 에클 조각을 받아 봐!',{face:'smile'});
+  Snd.play('battle');
+  const got=await ecruRain();
+  curBG=''; setBG('road');
+  await say('robin', got>=1500?'제법인데! 이건 용돈이다.':got>=600?'나쁘지 않군.':'…다음엔 더 집중해라.', {face:got>=600?'smile':'normal'});
+  await applyEff({ecru:got, charm:got>=1000?2:0, hp:-5});
 }
 </script>
 <script>
